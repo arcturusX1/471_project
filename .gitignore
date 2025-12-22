@@ -12,6 +12,7 @@ build/
 .env
 .env.local
 .env.*.local
+*.env
 
 # Logs
 logs/
@@ -34,4 +35,3 @@ pnpm-debug.log*
 
 # OS files
 Thumbs.db
-
