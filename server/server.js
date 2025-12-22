@@ -1,18 +1,33 @@
-import express from "express";
-import dotenv from "dotenv";
-import connectDB from "./config/db.js";
-
-dotenv.config();
-connectDB();
+const express = require("express");
+const cors = require("cors");
+const mongoose = require("mongoose");
+const projectRoutes = require("./routes/projectRoutes");
+const locationRoutes = require("./routes/locationRoutes");
 
 const app = express();
+const PORT = process.env.PORT || 1202;
+const MONGO_URI =
+  process.env.MONGO_URI || "mongodb+srv://db_connect:9wnOGOZ4RVGtCttH@cluster0.puwqhsb.mongodb.net/?appName=Cluster0";
+
+app.use(cors());
 app.use(express.json());
 
-const startServer = async()=>{
-    await connectDB();
+// Routes
+app.use("/api/projects", projectRoutes);
+app.use("/api/locations", locationRoutes);
 
-    const PORT = process.env.PORT || 5000;
-    app.listen(PORT, ()=>(`Server on port ${PORT}`))
-}
+const start = async () => {
+  try {
+    await mongoose.connect(MONGO_URI);
+    console.log("Connected to MongoDB");
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error("Failed to connect to MongoDB", err);
+    process.exit(1);
+  }
+};
 
-startServer();
+start();
+
