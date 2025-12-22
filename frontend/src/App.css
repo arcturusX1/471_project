@@ -1,0 +1,226 @@
+.page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 48px 24px 64px;
+  color: #e2e8f0;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+h1 {
+  margin: 4px 0 6px;
+  font-size: 2.6rem;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  margin: 4px 0;
+  font-size: 1.4rem;
+}
+
+.subtitle {
+  margin: 0;
+  color: #94a3b8;
+}
+
+.eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.pill.secondary {
+  background: rgba(14, 165, 233, 0.14);
+  border-color: rgba(14, 165, 233, 0.35);
+  color: #7dd3fc;
+}
+
+.pill-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 12px currentColor;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.muted {
+  color: #94a3b8;
+  margin: 4px 0;
+}
+
+.error {
+  color: #f87171;
+  margin: 8px 0;
+}
+
+.progress-track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  padding: 20px 8px 8px;
+}
+
+.progress-line {
+  position: absolute;
+  top: 28px;
+  left: 16px;
+  right: 16px;
+  height: 4px;
+  background: rgba(148, 163, 184, 0.2);
+  z-index: 0;
+}
+
+.checkpoint {
+  position: relative;
+  text-align: center;
+  z-index: 1;
+}
+
+.checkpoint-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  margin: 0 auto 8px;
+  border: 2px solid #334155;
+  background: #0f172a;
+  color: #94a3b8;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.checkpoint.completed .checkpoint-circle {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border-color: #22c55e;
+  color: #0b1120;
+  box-shadow: 0 12px 40px rgba(34, 197, 94, 0.35);
+}
+
+.checkpoint-label {
+  margin: 0;
+  color: #cbd5e1;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.updates-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.latest-update {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.latest-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 14px rgba(34, 197, 94, 0.7);
+}
+
+.update-title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.update-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.update-row {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.update-row:last-of-type {
+  border-bottom: none;
+}
+
+.timeline-node {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #38bdf8;
+  margin-top: 6px;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.65);
+}
+
+.update-message {
+  margin: 0;
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .page {
+    padding: 32px 16px 48px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .section-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
