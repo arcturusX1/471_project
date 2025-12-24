@@ -1,0 +1,4 @@
+/* App.css */
+/* We are removing the default #root styles (max-width, text-align center)
+   because we are using TailwindCSS in App.tsx to control the layout.
+*/
