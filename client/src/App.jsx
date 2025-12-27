@@ -1,22 +1,143 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 import ProgressBar from "./components/ProgressBar";
+import GroupFinder from "./components/GroupFinder";
+import LocationFinder from "./components/LocationFinder";
+import Auth from "./components/Auth";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
-const formatDate = (dateString) => {
-  if (!dateString) return "";
-  return new Date(dateString).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-};
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:1202";
 
 function App() {
+  const [activeView, setActiveView] = useState("group-finder");
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check for existing auth
+    const savedToken = localStorage.getItem("token");
+    const savedUser = localStorage.getItem("user");
+
+    if (savedToken && savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        // Validate that user has required fields from new auth system
+        // New system uses: id, email, roles (array), profile.department
+        if (parsedUser && parsedUser.id && parsedUser.email) {
+          setToken(savedToken);
+          setUser(parsedUser);
+        } else {
+          // Invalid user data (old format), clear it
+          console.log("Clearing invalid user data from localStorage");
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          localStorage.removeItem("currentUser"); // Also clear old demo user data
+        }
+      } catch (err) {
+        // Invalid JSON, clear it
+        console.log("Error parsing user data, clearing localStorage");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("currentUser");
+      }
+    } else {
+      // Also clear old demo user data if it exists
+      if (localStorage.getItem("currentUser")) {
+        localStorage.removeItem("currentUser");
+      }
+    }
+    setLoading(false);
+  }, []);
+
+  const handleLogin = (userData, authToken) => {
+    setUser(userData);
+    setToken(authToken);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
+    setToken(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="app">
+        <div style={{ textAlign: "center", padding: "3rem", color: "#e2e8f0" }}>
+          Loading...
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !token) {
+    return (
+      <div className="app">
+        <Auth onLogin={handleLogin} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="app">
+      <nav className="app-nav">
+        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+          <button
+            className={`nav-btn ${activeView === "project-tracker" ? "active" : ""}`}
+            onClick={() => setActiveView("project-tracker")}
+          >
+            Project Tracker
+          </button>
+          <button
+            className={`nav-btn ${activeView === "group-finder" ? "active" : ""}`}
+            onClick={() => setActiveView("group-finder")}
+          >
+            Group Finder
+          </button>
+          <button
+            className={`nav-btn ${activeView === "location-finder" ? "active" : ""}`}
+            onClick={() => setActiveView("location-finder")}
+          >
+            Location Finder
+          </button>
+        </div>
+        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+          <span style={{ color: "#cbd5e1", fontSize: "0.9rem" }}>
+            {user.name} ({user.role || user.roles?.[0]})
+          </span>
+          <button className="nav-btn" onClick={handleLogout}>
+            Logout
+          </button>
+        </div>
+      </nav>
+
+      {activeView === "group-finder" ? (
+        <GroupFinder user={user} token={token} />
+      ) : activeView === "location-finder" ? (
+        <LocationFinder />
+      ) : (
+        <ProjectTracker />
+      )}
+    </div>
+  );
+}
+
+function ProjectTracker() {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:1202";
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    return new Date(dateString).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
 
   useEffect(() => {
     const fetchProjects = async () => {

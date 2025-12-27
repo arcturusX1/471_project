@@ -1,3 +1,37 @@
+.app {
+  min-height: 100vh;
+  background: #0f172a;
+}
+
+.app-nav {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 2rem;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+}
+
+.nav-btn {
+  padding: 0.5rem 1.5rem;
+  background: transparent;
+  border: 1px solid #475569;
+  color: #cbd5e1;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover {
+  background: #334155;
+  border-color: #64748b;
+}
+
+.nav-btn.active {
+  background: #007bff;
+  border-color: #007bff;
+  color: white;
+}
+
 .page {
   max-width: 1080px;
   margin: 0 auto;

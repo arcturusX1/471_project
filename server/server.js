@@ -3,6 +3,9 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const projectRoutes = require("./routes/projectRoutes");
 const locationRoutes = require("./routes/locationRoutes");
+const userRoutes = require("./routes/userRoutes");
+const groupPostRoutes = require("./routes/groupPostRoutes");
+const applicationRoutes = require("./routes/applicationRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 1202;
@@ -15,6 +18,9 @@ app.use(express.json());
 // Routes
 app.use("/api/projects", projectRoutes);
 app.use("/api/locations", locationRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/group-posts", groupPostRoutes);
+app.use("/api/applications", applicationRoutes);
 
 const start = async () => {
   try {
