@@ -47,3 +47,19 @@ export const requestConsultation = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getFacultySchedule = async (req, res) => {
+  try {
+    // Only fetch requests assigned to this faculty with 'Accepted' status
+    const schedule = await ConsultationRequest.find({
+      faculty: req.user._id,
+      status: 'Accepted'
+    })
+    .populate('requester', 'name universityId email') // Get Student details
+    .sort({ preferredStart: 1 }); // Sort by soonest date
+
+    res.json(schedule);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
