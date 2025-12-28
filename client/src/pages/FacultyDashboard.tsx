@@ -33,7 +33,7 @@ export default function FacultyDashboard() {
     <div className="dashboard-container">
       <header className="dashboard-header">
         <h2>APCMS Faculty</h2>
-        <button className="logout-btn" onClick={() => { localStorage.clear(); navigate("/login"); }}>Logout</button>
+        
       </header>
 
       <section className="user-card">
