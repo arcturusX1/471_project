@@ -249,7 +249,7 @@ export function AddProjectModal({ onClose, onSuccess, studentName, userRole }: A
                 value={formData.supervisor}
                 onChange={(e) => setFormData({ ...formData, supervisor: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., Dr. Sarah Johnson"
+                placeholder="Write Your Supervisor name"
                 required
               />
             </div>

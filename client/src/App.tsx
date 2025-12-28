@@ -16,6 +16,7 @@ import { evaluationApi } from "./services/evaluationApi";
 import { applicationApi } from "./services/positionApi";
 import { PositionApplications } from "./components/PositionApplications";
 import { BookOpen, Briefcase, Building, Calendar, MonitorSmartphone, Users, LogOut } from "lucide-react";
+import { ModeToggle } from "./components/mode-toggle";
 
 export type UserRole = "admin" | "faculty" | "student";
 export type AssessorRole = "Supervisor" | "Co-Supervisor" | "ST" | "RA" | "TA" | "External Examiner";
@@ -327,20 +328,22 @@ export default function App() {
                 </p>
               </div>
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
                   <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center">
                     <span className="text-white text-sm">
                       {userRole === "admin" ? "AD" : userRole === "faculty" ? "FA" : "ST"}
                     </span>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-900">
+                    <p className="text-sm text-gray-900 dark:text-gray-100">
                       {userRole === "admin" ? "Admin" : userRole === "faculty" ? "Faculty" : "Student"}
                     </p>
-                    <p className="text-xs text-gray-600 capitalize">{userRole}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 capitalize">{userRole}</p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                  <ModeToggle />
+                  <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
                   {(['student', 'faculty', 'admin'] as UserRole[]).map((role) => (
                     <button
                       key={role}
@@ -378,7 +381,7 @@ export default function App() {
               evaluations={evaluations}
               onProjectCreated={refreshMyProjects}
               onAssignEvaluation={handleAssignEvaluation}
-              studentName="Demo User"
+              studentName="Your name will be auto-saved"
             />
           )}
           {currentPage === "project-details" && selectedProjectId && (

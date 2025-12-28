@@ -51,16 +51,16 @@ export function Sidebar({ currentPage, userRole, onNavigate }: SidebarProps) {
   const filteredNavItems = navItems.filter((item) => item.roles.includes(userRole));
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+    <aside className="w-64 bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 border-r border-purple-700 flex flex-col shadow-xl">
       {/* Logo Section */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b border-purple-600/30">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-lg flex items-center justify-center shadow-lg">
             <FileText className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-gray-900">APCMS</h2>
-            <p className="text-xs text-gray-500">Efficiency You Can Trust.</p>
+            <h2 className="text-purple-100 font-bold text-lg drop-shadow-lg">APCMS</h2>
+            <p className="text-xs text-purple-200">Efficiency You Can Trust.</p>
           </div>
         </div>
       </div>
@@ -68,16 +68,21 @@ export function Sidebar({ currentPage, userRole, onNavigate }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 p-4">
         <div className="space-y-1">
-          <p className="px-3 py-2 text-xs text-gray-500 uppercase tracking-wider">Main Menu</p>
+          <p className="px-3 py-2 text-xs text-purple-300 uppercase tracking-wider font-semibold">Main Menu</p>
           {filteredNavItems.map((item) => (
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
                 currentPage === item.id || (currentPage === 'project-details' && item.id === 'projects')
-                  ? 'bg-blue-50 text-blue-700'
-                  : 'text-gray-700 hover:bg-gray-50'
+                  ? 'bg-purple-600/30 text-purple-100 border-l-4 border-purple-400 shadow-lg'
+                  : 'text-purple-200 hover:bg-purple-700/20 hover:text-white hover:shadow-md'
               }`}
+              style={{
+                filter: currentPage === item.id || (currentPage === 'project-details' && item.id === 'projects')
+                  ? 'brightness(1.2)'
+                  : 'brightness(0.9)'
+              }}
             >
               {item.icon}
               <span>{item.label}</span>
@@ -87,8 +92,8 @@ export function Sidebar({ currentPage, userRole, onNavigate }: SidebarProps) {
 
         {/* Secondary Menu */}
         <div className="mt-8 space-y-1">
-          <p className="px-3 py-2 text-xs text-gray-500 uppercase tracking-wider">System</p>
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+          <p className="px-3 py-2 text-xs text-purple-300 uppercase tracking-wider font-semibold">System</p>
+          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-purple-200 hover:bg-purple-700/20 hover:text-white transition-all duration-200 hover:shadow-md">
             <Settings className="w-5 h-5" />
             <span>Settings</span>
           </button>
@@ -96,10 +101,10 @@ export function Sidebar({ currentPage, userRole, onNavigate }: SidebarProps) {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-200">
-        <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-          <p className="text-xs text-blue-900 mb-1">Need Help?</p>
-          <p className="text-xs text-blue-700">Contact support@campus.edu</p>
+      <div className="p-4 border-t border-purple-600/30">
+        <div className="bg-gradient-to-r from-purple-800/50 to-pink-800/50 rounded-lg p-3 border border-purple-500/30 backdrop-blur-sm">
+          <p className="text-xs text-purple-200 mb-1 font-medium">Need Help?</p>
+          <p className="text-xs text-purple-300">Contact support@campus.edu</p>
         </div>
       </div>
     </aside>
