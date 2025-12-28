@@ -8,12 +8,13 @@ export default function StudentDashboard() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !user.roles.includes('student')) {
       navigate("/login");
     } else {
       fetchConsultations();
     }
   }, []);
+
 
   const fetchConsultations = async () => {
     const response = await fetch('http://localhost:5000/api/consultations/my-consultations', {

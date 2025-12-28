@@ -4,13 +4,14 @@ import './Auth.css';
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState<RegisterData>({
-    name: "",
-    universityId: "",
-    email: "",
-    password: "",
-    roles: "student",
-    department: ""
+   name: "",
+   universityId: "",
+   email: "",
+   password: "",
+   roles: "student", // lowercase
+   department: ""
   });
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -45,7 +46,7 @@ const Register: React.FC = () => {
         <input name="email" type="email" placeholder="Email" onChange={handleChange} required />
         <input name="password" type="password" placeholder="Password" onChange={handleChange} required />
         
-        <select name="roles" onChange={handleChange} value={formData.roles}>
+        <select name="roles" value={formData.roles} onChange={handleChange}>
           <option value="student">Student</option>
           <option value="faculty">Faculty</option>
         </select>

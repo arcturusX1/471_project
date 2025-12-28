@@ -5,17 +5,22 @@ export interface RegisterData {
   name: string;
   universityId: string;
   email: string;
-  password?: string;
+  password: string;
   roles: UserRole;
+  department: string;
+}
+
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  universityId: string;
+  roles: string[];
   department: string;
 }
 
 export interface AuthResponse {
   token: string;
-  user: {
-    id: string;
-    name: string;
-    roles: string[];
-  };
+  user: AuthUser;
   message?: string;
 }

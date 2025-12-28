@@ -20,18 +20,15 @@ const Login: React.FC = () => {
       const data: AuthResponse = await response.json();
 
       if (response.ok && data.user && data.token) {
-        // 1. Save token
         localStorage.setItem('token', data.token);
-
-        // 2. IMPORTANT: Save the full user object so Dashboards can read user.name, user.universityId, etc.
         localStorage.setItem('user', JSON.stringify(data.user));
 
-        // 3. Redirect based on role
         if (data.user.roles.includes('faculty')) {
           navigate('/faculty-dashboard');
         } else {
           navigate('/student-dashboard');
         }
+
       } else {
         alert(data.message || "Invalid Login");
       }

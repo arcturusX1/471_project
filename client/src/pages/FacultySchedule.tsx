@@ -29,9 +29,7 @@ const FacultySchedule: React.FC = () => {
               <p><strong>Student:</strong> {session.requester?.name}</p>
               <p><strong>ID:</strong> {session.requester?.universityId}</p>
               <p><strong>Time:</strong> {new Date(session.preferredStart).toLocaleString()}</p>
-              <button className="email-btn" onClick={() => window.location.href = `mailto:${session.requester?.email}`}>
-                Email Student
-              </button>
+              
             </div>
           ))
         ) : (

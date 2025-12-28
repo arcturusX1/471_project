@@ -8,7 +8,7 @@ export default function FacultyDashboard() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
   useEffect(() => {
-    if (!user || !user.role.includes('faculty')) {
+    if (!user || !user.roles.includes('faculty')) {
       navigate("/login");
     } else {
       fetchRequests();
@@ -50,7 +50,8 @@ export default function FacultyDashboard() {
 
       <h4>Pending Requests</h4>
       <div className="data-list">
-        {requests.filter((r: any) => r.status === 'Pending').length > 0 ? (
+        {requests.filter((r: any) => r.status === 'pending').length > 0 ? (
+
           requests.map((r: any) => (
             <div key={r._id} className="data-item">
               <strong>{r.requester?.name}</strong> - {r.reason || 'No reason provided'}
