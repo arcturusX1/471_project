@@ -45,7 +45,7 @@ export default function FacultyDashboard() {
         <button onClick={() => navigate("/faculty-schedule")}>View My Schedule</button>
         <button onClick={() => navigate("/consultation-requests")}>Consultation Requests ({requests.length})</button>
         <button onClick={() => navigate("/assign-student-tutor")}>Assign Student Tutor</button>
-        <button onClick={() => navigate("/feedback")}>Campus management system</button>
+        <button onClick={() => navigate("/projects")}>Campus management system</button>
       </div>
 
       <h4>Pending Requests</h4>
