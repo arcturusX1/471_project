@@ -1,10 +1,10 @@
-import pkg from '../models/model.js';
-const { ConsultationRequest, User } = pkg;
+import { ConsultationRequest, User } from '../models/model.js';
+//const { ConsultationRequest, User } = pkg;
 
 // Get consultations for a specific user
 export const getMyConsultations = async (req, res) => {
   try {
-    // req.user is populated by the auth middleware we discussed earlier
+    // req.user is populated by the auth middleware 
     const query = req.user.roles.includes('Faculty') 
       ? { faculty: req.user._id } 
       : { requester: req.user._id };
@@ -59,6 +59,29 @@ export const getFacultySchedule = async (req, res) => {
     .sort({ preferredStart: 1 }); // Sort by soonest date
 
     res.json(schedule);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const submitFeedback = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rating, comment } = req.body;
+
+    const consultation = await ConsultationRequest.findByIdAndUpdate(
+      id,
+      { 
+        feedbackForST: { 
+          rating, 
+          comment, 
+          submittedBy: req.user._id, 
+          submittedAt: new Date() 
+        } 
+      },
+      { new: true }
+    );
+    res.json(consultation);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

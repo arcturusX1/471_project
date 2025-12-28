@@ -63,6 +63,12 @@ const Login: React.FC = () => {
         <p style={{ textAlign: 'center', marginTop: '10px' }}>
           Don't have an account? <span style={{ color: '#007bff', cursor: 'pointer' }} onClick={() => navigate('/register')}>Register</span>
         </p>
+        <hr style={{ width: '100%', margin: '15px 0', border: '0.5px solid #eee' }} />
+        <p style={{ textAlign: 'center' }}>
+          <span style={{ color: '#dc3545', cursor: 'pointer', fontSize: '0.9rem' }} onClick={() => navigate('/admin-login')}>
+            Admin Login
+          </span>
+        </p>
       </form>
     </div>
   );

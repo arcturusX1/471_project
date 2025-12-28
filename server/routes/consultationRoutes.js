@@ -1,6 +1,6 @@
 import express from 'express';
 import { getMyConsultations } from '../controllers/consultationController.js';
-import { protect } from '../middleware/authMiddleware.js'; // You'll need this middleware
+import { protect } from '../middleware/authMiddleware.js'; 
 
 const router = express.Router();
 

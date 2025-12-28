@@ -1,5 +1,5 @@
-import pkg from '../models/model.js';
-const { User } = pkg;
+import { User } from '../models/model.js';
+//const { User } = pkg;
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 

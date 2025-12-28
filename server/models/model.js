@@ -1,5 +1,5 @@
 // server/models
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 const { Schema, model } = mongoose;
 
 /**
@@ -344,7 +344,7 @@ const Notification = model('Notification', NotificationSchema);
 const QRLocation = model('QRLocation', QRLocationSchema);
 const Resource = model('Resource', ResourceSchema);
 
-module.exports = {
+export {
   User, Project, Reservation, SupervisorAssignment, Application,
   ConsultationRequest, Evaluation, AuditLog, GroupPost,
   Conversation, Message, Notification, QRLocation, Resource
