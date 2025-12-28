@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { ArrowLeft, Calendar, User, Building2, Clock, UserPlus } from 'lucide-react';
+import { ArrowLeft, Calendar, User, Building2, Clock, UserPlus, Star } from 'lucide-react';
 import type { UserRole, Project, Evaluation } from '../App';
 import { ProjectEvaluationTab } from './ProjectEvaluationTab';
+import { projectApi } from '../services/projectService';
+import { toast } from 'sonner';
 
 interface ProjectDetailsProps {
   projectId: string;
@@ -16,18 +18,24 @@ interface ProjectDetailsProps {
 
 type TabView = 'overview' | 'resources' | 'timeline' | 'evaluations';
 
-export function ProjectDetails({ 
-  projectId, 
-  userRole, 
-  currentUserId, 
-  onBack, 
-  projects, 
-  evaluations, 
+export function ProjectDetails({
+  projectId,
+  userRole,
+  currentUserId,
+  onBack,
+  projects,
+  evaluations,
   onSubmitEvaluation,
-  onAssignEvaluation 
+  onAssignEvaluation
 }: ProjectDetailsProps) {
   const [activeTab, setActiveTab] = useState<TabView>('overview');
-  
+  const [evaluationForm, setEvaluationForm] = useState({
+    marks: '',
+    remarks: '',
+    status: 'approved'
+  });
+  const [isSubmittingEvaluation, setIsSubmittingEvaluation] = useState(false);
+
   const project = projects.find((p) => p.id === projectId);
   
   if (!project) {
@@ -294,6 +302,119 @@ export function ProjectDetails({
               evaluations={evaluations}
               onSubmitEvaluation={onSubmitEvaluation}
             />
+          )}
+
+          {/* Faculty Evaluation Form */}
+          {userRole === 'faculty' && project.supervisor === 'demo-faculty-1' && !project.evaluation && (
+            <div className="mt-6 bg-blue-50 rounded-lg border border-blue-200 p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Star className="w-5 h-5 text-blue-600" />
+                <h3 className="text-lg font-semibold text-blue-900">Evaluate Project</h3>
+              </div>
+
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                setIsSubmittingEvaluation(true);
+
+                try {
+                  const evaluationData = {
+                    marks: parseInt(evaluationForm.marks),
+                    remarks: evaluationForm.remarks,
+                    status: evaluationForm.status
+                  };
+
+                  await projectApi.evaluateProject(project.id, evaluationData);
+                  toast.success('Project evaluated successfully!');
+
+                  // Refresh the page or update state
+                  window.location.reload();
+                } catch (error: any) {
+                  toast.error(error.response?.data?.error || 'Failed to submit evaluation');
+                } finally {
+                  setIsSubmittingEvaluation(false);
+                }
+              }} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Marks (0-100) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={evaluationForm.marks}
+                      onChange={(e) => setEvaluationForm({ ...evaluationForm, marks: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Status
+                    </label>
+                    <select
+                      value={evaluationForm.status}
+                      onChange={(e) => setEvaluationForm({ ...evaluationForm, status: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="approved">Approved</option>
+                      <option value="rejected">Rejected</option>
+                      <option value="submitted">Submitted</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Remarks
+                  </label>
+                  <textarea
+                    value={evaluationForm.remarks}
+                    onChange={(e) => setEvaluationForm({ ...evaluationForm, remarks: e.target.value })}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    placeholder="Enter your evaluation remarks..."
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={isSubmittingEvaluation}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isSubmittingEvaluation ? 'Submitting...' : 'Submit Evaluation'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Show Evaluation Results */}
+          {project.evaluation && (
+            <div className="mt-6 bg-green-50 rounded-lg border border-green-200 p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Star className="w-5 h-5 text-green-600" />
+                <h3 className="text-lg font-semibold text-green-900">Evaluation Results</h3>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p className="text-sm text-gray-600">Marks</p>
+                  <p className="text-2xl font-bold text-green-600">{project.evaluation.marks}/100</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Status</p>
+                  <p className="text-lg font-semibold text-green-600 capitalize">{project.status}</p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-600 mb-2">Remarks</p>
+                <p className="text-gray-700 bg-white p-3 rounded border">{project.evaluation.remarks}</p>
+              </div>
+            </div>
           )}
         </div>
       </div>

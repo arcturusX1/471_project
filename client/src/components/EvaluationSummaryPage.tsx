@@ -1,15 +1,15 @@
 import { ArrowLeft, Download, Printer, User, Award, TrendingUp, MessageSquare } from 'lucide-react';
-import type { Project, UserRole } from '../App';
-import { mockEvaluations } from '../data/mockData';
+import type { Project, UserRole, Evaluation } from '../App';
 
 interface EvaluationSummaryPageProps {
   project: Project;
   userRole: UserRole;
+  evaluations: Evaluation[];
   onBack: () => void;
 }
 
-export function EvaluationSummaryPage({ project, userRole, onBack }: EvaluationSummaryPageProps) {
-  const projectEvaluations = mockEvaluations.filter((e) => e.projectId === project.id);
+export function EvaluationSummaryPage({ project, userRole, evaluations, onBack }: EvaluationSummaryPageProps) {
+  const projectEvaluations = evaluations.filter((e) => e.projectId === project.id);
   const submittedEvaluations = projectEvaluations.filter((e) => e.status === 'Submitted');
 
   // Calculate average scores

@@ -1,4 +1,4 @@
-import { LayoutDashboard, FolderKanban, Calendar, Users, FileText, Settings } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Calendar, Users, FileText, Settings, Briefcase } from 'lucide-react';
 import type { PageView, UserRole } from '../App';
 
 interface SidebarProps {
@@ -32,6 +32,12 @@ export function Sidebar({ currentPage, userRole, onNavigate }: SidebarProps) {
       id: 'reservations',
       label: 'Room & Desk Booking',
       icon: <Calendar className="w-5 h-5" />,
+      roles: ['admin', 'faculty', 'student'],
+    },
+    {
+      id: 'positions',
+      label: 'Positions & Applications',
+      icon: <Briefcase className="w-5 h-5" />,
       roles: ['admin', 'faculty', 'student'],
     },
     {

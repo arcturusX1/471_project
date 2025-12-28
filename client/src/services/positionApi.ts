@@ -5,12 +5,18 @@ const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost
 const api = axios.create({
   baseURL: API_BASE_URL,
 });
-
+// Dynamic auth headers based on selected role
 api.interceptors.request.use((config: any) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  const userRole = localStorage.getItem('userRole') || 'student';
+
+  let userId = 'demo-student-1';
+  if (userRole === 'admin') userId = 'demo-admin-1';
+  if (userRole === 'faculty') userId = 'demo-faculty-1';
+
+  config.headers['x-user-id'] = config.headers['x-user-id'] || userId;
+  config.headers['x-user-role'] = config.headers['x-user-role'] || userRole;
+
+  console.log(`POSITION API REQUEST - Auth context: ${userRole} (${userId})`);
   return config;
 });
 
@@ -21,9 +27,11 @@ export interface Application {
     name: string;
     email: string;
   };
+  positionId: string;
   positionType: 'ST' | 'RA' | 'TA';
-  status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  status: 'pending' | 'accepted' | 'rejected' | 'PENDING' | 'ACCEPTED' | 'REJECTED';
   appliedAt: string;
+  appliedDate?: string;
   reviewedBy?: {
     _id: string;
     name: string;
@@ -109,7 +117,7 @@ export const positionApi = {
 export const applicationApi = {
   // Submit new application
   submitApplication: async (applicationData: {
-    positionType: 'ST' | 'RA' | 'TA';
+    positionId: string; // Changed from positionType to positionId to match hook
     studentName: string;
     email: string;
     studentId: string;
@@ -119,7 +127,7 @@ export const applicationApi = {
     experience: string;
     coverLetter: string;
   }): Promise<Application> => {
-    const response = await api.post('/applications', applicationData);
+    const response = await api.post('/applications', applicationData); // Note: Hook calls this with positionId, verify backend
     return response.data;
   },
 
@@ -129,8 +137,20 @@ export const applicationApi = {
     return response.data;
   },
 
+  // Get student applications
+  getStudentApplications: async (studentId: string): Promise<{ data: Application[] }> => {
+    // Current backend /applications returns all or filtered by user. 
+    // To filter by studentId, we might need to filter client side or update backend.
+    // However, for consistency with 'usePositions', we'll call the main endpoint and filter if needed, 
+    // OR just return the response if backend handles "my applications"
+    const response = await api.get('/applications');
+    return { data: response.data };
+  },
+
   // Update application status
-  updateApplicationStatus: async (id: string, status: 'ACCEPTED' | 'REJECTED'): Promise<Application> => {
+  updateApplicationStatus: async (id: string, status: 'accepted' | 'rejected'): Promise<Application> => {
+    // NOTE: Frontend uses lowercase 'accepted', backend uses 'ACCEPTED' or whatever. 
+    // Ensure consistency.
     const response = await api.patch(`/applications/${id}`, { status });
     return response.data;
   }

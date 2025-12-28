@@ -1,4 +1,4 @@
-import { TrendingUp, FolderKanban, Calendar, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { TrendingUp, FolderKanban, Calendar, CheckCircle, Clock, AlertCircle, Users } from 'lucide-react';
 import type { PageView, UserRole, Project, Evaluation } from '../App';
 
 interface DashboardProps {
@@ -155,6 +155,16 @@ export function Dashboard({ userRole, onNavigate, onViewProject, projects, evalu
               >
                 View All Projects
               </button>
+              <button
+                onClick={() => onNavigate('projects')}
+                className={`w-full px-4 py-3 text-white rounded-lg hover:opacity-90 transition-colors text-sm ${
+                  userRole === 'student' ? 'bg-red-600 hover:bg-red-700' :
+                  userRole === 'faculty' ? 'bg-blue-600 hover:bg-blue-700' :
+                  'bg-green-600 hover:bg-green-700'
+                }`}
+              >
+                Add New Project
+              </button>
               {userRole === 'faculty' && (
                 <button
                   onClick={() => onNavigate('projects')}
@@ -163,7 +173,15 @@ export function Dashboard({ userRole, onNavigate, onViewProject, projects, evalu
                   My Evaluations
                 </button>
               )}
-              {userRole !== 'faculty' && (
+              {userRole === 'admin' && (
+                <button
+                  onClick={() => onNavigate('users')}
+                  className="w-full px-4 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                >
+                  Manage Users
+                </button>
+              )}
+              {userRole !== 'faculty' && userRole !== 'admin' && (
                 <button
                   onClick={() => onNavigate('reservations')}
                   className="w-full px-4 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm"

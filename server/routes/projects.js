@@ -1,64 +1,149 @@
-const express = require('express');
-const router = express.Router();
-const Project = require('../models/Project');
-const { protect, authorize } = require('../middleware/auth');
+import express from "express";
+import Project from "../models/Project.js";
+import { mockAuth, requireRole } from "../middleware/mockAuth.js";
 
-// @route   GET /api/projects
-// @desc    Get all projects (with filters)
-// @access  Private
-router.get('/', protect, async (req, res) => {
+const router = express.Router();
+
+// Test endpoint to verify routing works
+router.get("/test", (req, res) => {
+  console.log('🧪 TEST ENDPOINT CALLED');
+  res.json({ message: "Project routes working", timestamp: new Date().toISOString() });
+});
+
+/**
+ * POST /api/projects
+ * Create a new project (faculty only)
+ */
+router.post("/", mockAuth, requireRole('faculty'), async (req, res) => {
   try {
-    const { department, status, studentId } = req.query;
-    
-    let filter = {};
-    
-    // Apply filters
-    if (department) filter.department = department;
-    if (status) filter.status = status;
-    if (studentId) filter.studentId = studentId;
-    
-    // Students can only see their own projects (unless admin/faculty)
-    if (req.user.role === 'student') {
-      filter.studentUserId = req.user.id;
+    console.log('📝 FACULTY CREATING PROJECT');
+    console.log('📝 REQUEST BODY:', req.body);
+    console.log('📝 USER:', req.user);
+
+    const {
+      title,
+      description,
+      assignSelfAsSupervisor = false
+    } = req.body;
+
+    // Validation
+    if (!title || !description) {
+      return res.status(400).json({ error: "Title and description are required" });
     }
 
-    const projects = await Project.find(filter)
-      .sort({ createdAt: -1 })
-      .populate('studentUserId', 'name email');
+    // Create project data
+    const projectData = {
+      title: title.trim(),
+      description: description.trim(),
+      createdBy: req.user.id,
+      members: [req.user.id], // Auto-add creator to members
+      supervisor: assignSelfAsSupervisor ? req.user.id : null,
+      status: "draft"
+    };
 
-    res.status(200).json({
+    console.log('📝 CREATING PROJECT WITH DATA:', projectData);
+
+    const project = await Project.create(projectData);
+
+    console.log('✅ PROJECT CREATED SUCCESSFULLY:', project._id);
+
+    res.status(201).json({
+      success: true,
+      message: 'Project created successfully',
+      data: project
+    });
+
+  } catch (error) {
+    console.error('❌ PROJECT CREATION FAILED:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create project',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/projects/mine
+ * Get user's projects
+ */
+router.get("/mine", mockAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get projects where user is creator or member
+    const projects = await Project.find({
+      $or: [
+        { createdBy: userId },
+        { members: userId }
+      ]
+    }).sort({ createdAt: -1 });
+
+    console.log(`📋 RETRIEVED ${projects.length} PROJECTS FOR USER ${userId}`);
+
+    res.json({
       success: true,
       count: projects.length,
       data: projects
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      error: error.message 
+    console.error('❌ FAILED TO GET USER PROJECTS:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get projects'
     });
   }
 });
 
-// @route   GET /api/projects/:id
-// @desc    Get single project by ID
-// @access  Private
-router.get('/:id', protect, async (req, res) => {
+/**
+ * GET /api/projects
+ * Get all projects (faculty/admin only)
+ */
+router.get("/", mockAuth, requireRole('faculty', 'admin'), async (req, res) => {
   try {
-    const project = await Project.findById(req.params.id)
-      .populate('studentUserId', 'name email studentId');
+    const projects = await Project.find({}).sort({ createdAt: -1 });
+    console.log(`📋 RETRIEVED ${projects.length} PROJECTS FROM MONGODB`);
+
+    res.json({
+      success: true,
+      count: projects.length,
+      data: projects
+    });
+  } catch (error) {
+    console.error('❌ FAILED TO GET ALL PROJECTS:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get projects'
+    });
+  }
+});
+
+/**
+ * GET /api/projects/:id
+ * Get single project by ID
+ */
+router.get('/:id', mockAuth, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
 
     if (!project) {
-      return res.status(404).json({ 
-        success: false, 
-        error: 'Project not found' 
+      return res.status(404).json({
+        success: false,
+        error: 'Project not found'
       });
     }
 
-    // Students can only view their own projects
-    if (req.user.role === 'student' && project.studentUserId._id.toString() !== req.user.id) {
-      return res.status(403).json({ 
-        success: false, 
-        error: 'Not authorized to view this project' 
+    // Check authorization - user must be creator, member, or faculty/admin
+    const userId = req.user.id;
+    const isAuthorized =
+      project.createdBy === userId ||
+      project.members.includes(userId) ||
+      ['faculty', 'admin'].includes(req.user.role);
+
+    if (!isAuthorized) {
+      return res.status(403).json({
+        success: false,
+        error: 'Not authorized to view this project'
       });
     }
 
@@ -67,76 +152,43 @@ router.get('/:id', protect, async (req, res) => {
       data: project
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      error: error.message
     });
   }
 });
 
-// @route   POST /api/projects
-// @desc    Create new project
-// @access  Private (Student only)
-router.post('/', protect, authorize('student'), async (req, res) => {
+/**
+ * PUT /api/projects/:id
+ * Update project
+ */
+router.put('/:id', mockAuth, async (req, res) => {
   try {
-    const {
-      title,
-      description,
-      department,
-      startDate,
-      endDate,
-      supervisor
-    } = req.body;
-
-    // Create project with logged-in user's info
-    const project = await Project.create({
-      title,
-      studentName: req.user.name,
-      studentId: req.user.studentId,
-      studentUserId: req.user.id,
-      description,
-      department,
-      startDate,
-      endDate,
-      supervisor,
-      status: 'Planning'
-    });
-
-    res.status(201).json({
-      success: true,
-      data: project
-    });
-  } catch (error) {
-    res.status(400).json({ 
-      success: false, 
-      error: error.message 
-    });
-  }
-});
-
-// @route   PUT /api/projects/:id
-// @desc    Update project
-// @access  Private (Student - own project, Admin/Faculty - all)
-router.put('/:id', protect, async (req, res) => {
-  try {
-    let project = await Project.findById(req.params.id);
+    const project = await Project.findById(req.params.id);
 
     if (!project) {
-      return res.status(404).json({ 
-        success: false, 
-        error: 'Project not found' 
+      return res.status(404).json({
+        success: false,
+        error: 'Project not found'
       });
     }
 
-    // Check ownership (students can only update their own projects)
-    if (req.user.role === 'student' && project.studentUserId.toString() !== req.user.id) {
-      return res.status(403).json({ 
-        success: false, 
-        error: 'Not authorized to update this project' 
+    // Check authorization
+    const userId = req.user.id;
+    const isAuthorized =
+      project.createdBy === userId ||
+      project.members.includes(userId) ||
+      ['faculty', 'admin'].includes(req.user.role);
+
+    if (!isAuthorized) {
+      return res.status(403).json({
+        success: false,
+        error: 'Not authorized to update this project'
       });
     }
 
-    project = await Project.findByIdAndUpdate(
+    const updatedProject = await Project.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, runValidators: true }
@@ -144,38 +196,32 @@ router.put('/:id', protect, async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: project
+      data: updatedProject
     });
   } catch (error) {
-    res.status(400).json({ 
-      success: false, 
-      error: error.message 
+    res.status(400).json({
+      success: false,
+      error: error.message
     });
   }
 });
 
-// @route   DELETE /api/projects/:id
-// @desc    Delete project
-// @access  Private (Admin only, or student - own project)
-router.delete('/:id', protect, async (req, res) => {
+/**
+ * DELETE /api/projects/:id
+ * Delete project
+ */
+router.delete('/:id', mockAuth, requireRole('admin'), async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
 
     if (!project) {
-      return res.status(404).json({ 
-        success: false, 
-        error: 'Project not found' 
+      return res.status(404).json({
+        success: false,
+        error: 'Project not found'
       });
     }
 
-    // Only admin or the student who created it can delete
-    if (req.user.role !== 'admin' && project.studentUserId.toString() !== req.user.id) {
-      return res.status(403).json({ 
-        success: false, 
-        error: 'Not authorized to delete this project' 
-      });
-    }
-
+    // Only admin can delete
     await project.deleteOne();
 
     res.status(200).json({
@@ -183,11 +229,121 @@ router.delete('/:id', protect, async (req, res) => {
       message: 'Project deleted successfully'
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      error: error.message
     });
   }
 });
 
-module.exports = router;
+/**
+ * PATCH /api/projects/:id/supervisor/me
+ * Set current faculty as supervisor (faculty only)
+ */
+router.patch("/:id/supervisor/me", mockAuth, requireRole('faculty'), async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const userId = req.user.id;
+
+    console.log(`👨‍🏫 FACULTY ${userId} SETTING SELF AS SUPERVISOR FOR PROJECT ${projectId}`);
+
+    // Find project
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // Check if user is authorized (must be creator or member)
+    if (project.createdBy !== userId && !project.members.includes(userId)) {
+      return res.status(403).json({
+        error: 'Not authorized. You must be the creator or a member of this project.'
+      });
+    }
+
+    // Update supervisor
+    project.supervisor = userId;
+    await project.save();
+
+    console.log('✅ SUPERVISOR SET SUCCESSFULLY');
+
+    res.status(200).json({
+      success: true,
+      message: 'Successfully set as supervisor',
+      data: project
+    });
+
+  } catch (error) {
+    console.error('❌ SET SUPERVISOR FAILED:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to set supervisor',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * PATCH /api/projects/:id/evaluate
+ * Evaluate project (faculty only - must be supervisor)
+ */
+router.patch("/:id/evaluate", mockAuth, requireRole('faculty'), async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const userId = req.user.id;
+    const { marks, remarks, status } = req.body;
+
+    console.log(`📊 FACULTY ${userId} EVALUATING PROJECT ${projectId}`);
+
+    // Find project
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // Check if user is the supervisor
+    if (project.supervisor !== userId) {
+      return res.status(403).json({
+        error: 'Not authorized. You must be the supervisor of this project.'
+      });
+    }
+
+    // Validate marks
+    if (marks === undefined || marks < 0 || marks > 100) {
+      return res.status(400).json({ error: 'Marks must be between 0 and 100' });
+    }
+
+    // Create evaluation
+    const evaluation = {
+      evaluatedBy: userId,
+      marks: Number(marks),
+      remarks: remarks || '',
+      evaluatedAt: new Date()
+    };
+
+    // Update project
+    project.evaluation = evaluation;
+    if (status) {
+      project.status = status; // Optional status update
+    }
+
+    await project.save();
+
+    console.log('✅ PROJECT EVALUATED SUCCESSFULLY');
+
+    res.status(200).json({
+      success: true,
+      message: 'Project evaluated successfully',
+      data: project
+    });
+
+  } catch (error) {
+    console.error('❌ PROJECT EVALUATION FAILED:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to evaluate project',
+      details: error.message
+    });
+  }
+});
+
+export default router;

@@ -194,8 +194,8 @@ export function ProjectEvaluationTab({ project, userRole, currentUserId, evaluat
         {projectEvaluations.length === 0 && (
           <div className="bg-gray-50 rounded-lg border border-gray-200 p-8 text-center">
             <p className="text-gray-500">
-              {userRole === 'faculty' 
-                ? 'No faculty members assigned to evaluate this project yet. Click "Assign Myself to Evaluate" above to get started.'
+              {userRole === 'faculty'
+                ? <>No faculty members assigned to evaluate this project yet. Click <span className="text-blue-600 font-medium">"Assign Myself to Evaluate"</span> above to get started.</>
                 : 'No faculty members assigned to this project yet'}
             </p>
           </div>

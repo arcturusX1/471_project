@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react';
 import { X, Save, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { evaluationApi } from '../services/evaluationApi';
 import type { Evaluation, Project, Criterion } from '../App';
 
 interface EvaluationFormModalProps {
@@ -47,24 +49,41 @@ export function EvaluationFormModal({ evaluation, project, onClose, onSubmit }: 
     setCriteria(newCriteria);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const allScoresFilled = criteria.every((c) => c.score !== undefined && c.score >= 0);
     if (!allScoresFilled) {
-      alert('Please fill in all scores before submitting');
+      toast.error('Please fill in all scores before submitting');
       return;
     }
 
-    const updatedEvaluation: Evaluation = {
-      ...evaluation,
-      criteria: criteria,
-      finalComment: finalComment,
-      totalScore: totalScore,
-      status: 'Submitted',
-      submittedAt: new Date(),
-    };
+    try {
+      // Update evaluation in MongoDB
+      const updateData = {
+        criteria: criteria,
+        finalComment: finalComment,
+        status: 'Submitted'
+      };
 
-    onSubmit(updatedEvaluation);
-    alert('Evaluation submitted successfully!');
+      const updatedEvaluation = await evaluationApi.update(evaluation.id, updateData);
+
+      // Call the onSubmit callback with updated data
+      const localEvaluation: Evaluation = {
+        ...evaluation,
+        criteria: criteria,
+        finalComment: finalComment,
+        totalScore: updatedEvaluation.totalScore,
+        status: 'Submitted',
+        submittedAt: updatedEvaluation.submittedAt,
+        updatedAt: updatedEvaluation.updatedAt,
+      };
+
+      onSubmit(localEvaluation);
+      toast.success('Evaluation submitted successfully!');
+      onClose();
+    } catch (error: any) {
+      console.error('Error submitting evaluation:', error);
+      toast.error(error.response?.data?.error || 'Failed to submit evaluation');
+    }
   };
 
   const getGrade = (score: number) => {

@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react';
 import { Search, Filter, Eye, FileEdit } from 'lucide-react';
-import type { Project, UserRole, AssessorRole, EvaluationStatus } from '../App';
-import { mockProjects, mockEvaluations } from '../data/mockData';
+import type { Project, UserRole, AssessorRole, EvaluationStatus, Evaluation } from '../App';
+import { evaluationApi } from '../services/evaluationApi';
 
 interface EvaluationDashboardProps {
   userRole: UserRole;
   currentAssessorId: string;
+  projects: Project[];
+  evaluations: Evaluation[];
   onEvaluateProject: (project: Project) => void;
   onViewSummary: (project: Project) => void;
 }
@@ -19,6 +21,8 @@ interface ProjectWithStatus extends Project {
 export function EvaluationDashboard({
   userRole,
   currentAssessorId,
+  projects,
+  evaluations,
   onEvaluateProject,
   onViewSummary,
 }: EvaluationDashboardProps) {
@@ -30,8 +34,8 @@ export function EvaluationDashboard({
   const projectsWithStatus = useMemo((): ProjectWithStatus[] => {
     if (userRole === 'assessor') {
       // Assessor sees only their assigned projects
-      return mockProjects.map((project) => {
-        const evaluation = mockEvaluations.find(
+      return projects.map((project) => {
+        const evaluation = evaluations.find(
           (e) => e.projectId === project.id && e.assessorId === currentAssessorId
         );
         return {
@@ -42,11 +46,11 @@ export function EvaluationDashboard({
       });
     } else {
       // Admin/Student sees all projects with average scores
-      return mockProjects.map((project) => {
-        const projectEvaluations = mockEvaluations.filter((e) => e.projectId === project.id);
+      return projects.map((project) => {
+        const projectEvaluations = evaluations.filter((e) => e.projectId === project.id);
         const submittedEvaluations = projectEvaluations.filter((e) => e.status === 'Submitted');
         const allSubmitted = projectEvaluations.length > 0 && submittedEvaluations.length === projectEvaluations.length;
-        
+
         const averageScore =
           submittedEvaluations.length > 0
             ? submittedEvaluations.reduce((sum, e) => sum + e.totalScore, 0) / submittedEvaluations.length
@@ -59,7 +63,7 @@ export function EvaluationDashboard({
         };
       });
     }
-  }, [userRole, currentAssessorId]);
+  }, [userRole, currentAssessorId, projects, evaluations]);
 
   // Apply filters
   const filteredProjects = useMemo(() => {

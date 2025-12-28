@@ -1,19 +1,21 @@
-import { Search, Filter, Plus, UserPlus } from 'lucide-react';
+import { Search, Filter, Plus, UserPlus, UserCheck } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import type { UserRole, Project, Evaluation } from '../App';
 import { AddProjectModal } from './AddProjectModal';
+import { projectApi } from '../services/projectService';
+import { toast } from 'sonner';
 
 interface ProjectsListProps {
   userRole: UserRole;
   onViewProject: (projectId: string) => void;
-  onAddProject: (project: Project) => void;
   projects: Project[];
   evaluations: Evaluation[];
   onProjectCreated?: () => Promise<void> | void;
+  onAssignEvaluation?: (project: Project) => void;
   studentName: string;
 }
 
-export function ProjectsList({ userRole, onViewProject, onAddProject, projects, evaluations, onProjectCreated, studentName }: ProjectsListProps) {
+export function ProjectsList({ userRole, onViewProject, projects, evaluations, onProjectCreated, onAssignEvaluation, studentName }: ProjectsListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
@@ -47,15 +49,51 @@ export function ProjectsList({ userRole, onViewProject, onAddProject, projects, 
               : 'Manage and evaluate student projects'}
           </p>
         </div>
-        {userRole === 'student' && (
-          <button 
-            onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors bg-red-600 hover:bg-red-700 text-white border-none"
-          >
-            <Plus className="w-4 h-4" />
-            Add New Project
-          </button>
-        )}
+        <button
+          onClick={() => setShowAddModal(true)}
+          disabled={false}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '12px 20px',
+            borderRadius: '8px',
+            border: userRole === 'student' ? '3px solid #dc2626' : userRole === 'faculty' ? '3px solid #2563eb' : '3px solid #16a34a',
+            backgroundColor: userRole === 'student' ? '#dc2626' : userRole === 'faculty' ? '#2563eb' : '#16a34a',
+            color: '#ffffff',
+            fontWeight: 'bold',
+            fontSize: '16px',
+            cursor: 'pointer',
+            minWidth: '180px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            const colors = {
+              student: '#b91c1c',
+              faculty: '#1d4ed8',
+              admin: '#15803d'
+            };
+            e.currentTarget.style.backgroundColor = colors[userRole as keyof typeof colors] || '#b91c1c';
+            e.currentTarget.style.borderColor = colors[userRole as keyof typeof colors] || '#b91c1c';
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+          }}
+          onMouseLeave={(e) => {
+            const colors = {
+              student: '#dc2626',
+              faculty: '#2563eb',
+              admin: '#16a34a'
+            };
+            e.currentTarget.style.backgroundColor = colors[userRole as keyof typeof colors] || '#dc2626';
+            e.currentTarget.style.borderColor = colors[userRole as keyof typeof colors] || '#dc2626';
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+          }}
+        >
+          <Plus className="w-4 h-4" />
+          Add New Project
+        </button>
       </div>
 
       {/* Filters */}
@@ -162,19 +200,85 @@ export function ProjectsList({ userRole, onViewProject, onAddProject, projects, 
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-gray-200 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="text-sm text-gray-600">
-                      Evaluations: {submittedEvals.length}/{projectEvals.length}
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm text-gray-600">
+                        Evaluations: {submittedEvals.length}/{projectEvals.length}
+                      </div>
                     </div>
+                    {avgScore !== null ? (
+                      <div className="text-right">
+                        <p className="text-xs text-gray-600">Average Score</p>
+                        <p className="text-gray-900">{avgScore.toFixed(1)}/100</p>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-500">Pending evaluation</span>
+                    )}
                   </div>
-                  {avgScore !== null ? (
-                    <div className="text-right">
-                      <p className="text-xs text-gray-600">Average Score</p>
-                      <p className="text-gray-900">{avgScore.toFixed(1)}/100</p>
+
+                  {/* Faculty Actions */}
+                  {userRole === 'faculty' && (
+                    <div className="flex justify-center gap-2 mt-3">
+                      <>
+                        {(() => {
+                        // CONDITION 1: Show "Evaluate Project" ONLY if I am the supervisor and project hasn't been evaluated
+                        const amISupervisor = project.supervisor === 'demo-faculty-1';
+
+                        if (amISupervisor && !project.evaluation) {
+                          return (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log('Assigning myself to evaluate project:', project.id);
+                                if (onAssignEvaluation) {
+                                  onAssignEvaluation(project);
+                                } else {
+                                  toast.error('Assignment function not available');
+                                }
+                              }}
+                              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-xl hover:from-blue-600 hover:to-blue-800 transition-all duration-200 text-base font-bold shadow-lg hover:shadow-xl border-2 border-blue-400 hover:border-blue-500 transform hover:scale-105"
+                              title="Assign yourself to evaluate this project"
+                            >
+                              🎯 Evaluate Project
+                            </button>
+                          );
+                        }
+
+                        // CONDITION 2: Show "Make Me Supervisor" ONLY if the project has NO supervisor
+                        if (!project.supervisor) {
+                          return (
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if(!window.confirm("Are you sure you want to supervise this project?")) return;
+
+                                console.log('Assigning self as supervisor for project:', project.id);
+                                try {
+                                  await projectApi.setMeAsSupervisor(project.id);
+                                  toast.success('Successfully assigned as supervisor!');
+                                  // Refresh the projects list
+                                  if (onProjectCreated) {
+                                    await onProjectCreated();
+                                  }
+                                } catch (error: any) {
+                                  console.error('Failed to assign as supervisor:', error);
+                                  toast.error(error.response?.data?.error || 'Failed to assign as supervisor');
+                                }
+                              }}
+                              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center gap-2 shadow-sm"
+                            >
+                              <UserCheck className="w-4 h-4" />
+                              Make Me Supervisor
+                            </button>
+                          );
+                        }
+
+                        // Return nothing if I am not the supervisor AND someone else is already supervising
+                        return null;
+                      })()}
+                      </>
                     </div>
-                  ) : (
-                    <span className="text-sm text-gray-500">Pending evaluation</span>
                   )}
                 </div>
               </div>
@@ -189,16 +293,22 @@ export function ProjectsList({ userRole, onViewProject, onAddProject, projects, 
         </div>
       )}
 
-      {/* Add Project Modal */}
+      {/* Add Project Modal - For all roles */}
       {showAddModal && (
         <AddProjectModal
           onClose={() => setShowAddModal(false)}
           onSuccess={async () => {
-            if (onProjectCreated) {
-              await onProjectCreated();
+            try {
+              if (onProjectCreated) {
+                await onProjectCreated();
+              }
+            } catch (error) {
+              console.error('Error refreshing projects after creation:', error);
+              toast.error('Project created but failed to refresh list. Please refresh the page.');
             }
           }}
           studentName={studentName}
+          userRole={userRole}
         />
       )}
     </div>

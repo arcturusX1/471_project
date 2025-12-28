@@ -6,12 +6,11 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Badge } from "./ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
-import { Briefcase, Clock, DollarSign, Calendar, CheckCircle2, XCircle, AlertCircle, User, Check, X } from "lucide-react";
-import type { Position, Application, UserRole } from "../App";
+import { Briefcase, Clock, DollarSign, Calendar, CheckCircle2, XCircle, AlertCircle, Check, X } from "lucide-react";
+import type { Position, Application } from "../services/positionApi";
+import type { UserRole } from "../App";
 
 interface PositionApplicationsProps {
   /** temporary stand-in for auth */
@@ -35,19 +34,28 @@ export function PositionApplications({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [filterType, setFilterType] = useState<PositionFilterType>("all");
 
-  // Use props if provided, otherwise fall back to hooks
-  const positions = propPositions || [];
-  const applications = propApplications || [];
-  const onApply = propOnApply;
+  // Use the usePositions hook to manage data fetching
+  const {
+    positions: hookPositions,
+    applications: hookApplications,
+    submitApplication: hookSubmitApplication,
+  } = usePositions({
+    studentId: studentId,
+    availableOnly: true
+  });
+
+  // Use props if provided, otherwise fall back to hook data
+  const positions = propPositions || hookPositions;
+  const applications = propApplications || hookApplications;
+  const onApply = propOnApply || hookSubmitApplication;
 
 
 
   // For role-based logic, determine what user can see/do
   const canApply = userRole === "student";
-  const canReviewApplications = userRole === "admin" || userRole === "assessor";
+  const canReviewApplications = userRole === "admin" || userRole === "faculty";
 
-  // Filter applications based on role
-  const visibleApplications = canReviewApplications ? applications : applications.filter(app => app.studentId === studentId);
+
 
   // Helper functions
   const hasApplied = (positionId: string) => {
@@ -228,7 +236,7 @@ export function PositionApplications({
                       <div>
                         <p className="text-gray-700 mb-2">Requirements:</p>
                         <ul className="list-disc list-inside space-y-1 text-gray-600">
-                          {position.requirements.map((req, index) => (
+                          {position.requirements.map((req: string, index: number) => (
                             <li key={index}>{req}</li>
                           ))}
                         </ul>
@@ -391,7 +399,7 @@ export function PositionApplications({
                   if (!position) return null;
 
                   return (
-                    <Card key={application.id} className="border-2">
+                    <Card key={application._id} className="border-2">
                       <CardContent className="p-6">
                         <div className="space-y-4">
                           <div className="flex items-start justify-between">
@@ -407,25 +415,25 @@ export function PositionApplications({
                             <div className="flex flex-col items-end gap-2">
                               <Badge
                                 variant={
-                                  application.status === "accepted" ? "default" :
-                                  application.status === "rejected" ? "destructive" :
+                                  application.status?.toLowerCase() === "accepted" ? "default" :
+                                  application.status?.toLowerCase() === "rejected" ? "destructive" :
                                   "secondary"
                                 }
                                 className="flex items-center gap-1"
                               >
-                                {application.status === "accepted" && <CheckCircle2 className="size-3" />}
-                                {application.status === "rejected" && <XCircle className="size-3" />}
-                                {application.status === "pending" && <AlertCircle className="size-3" />}
-                                {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+                                {application.status?.toLowerCase() === "accepted" && <CheckCircle2 className="size-3" />}
+                                {application.status?.toLowerCase() === "rejected" && <XCircle className="size-3" />}
+                                {application.status?.toLowerCase() === "pending" && <AlertCircle className="size-3" />}
+                                {application.status?.charAt(0).toUpperCase() + application.status?.slice(1).toLowerCase()}
                               </Badge>
 
-                              {canReviewApplications && application.status === "pending" && (
+                              {canReviewApplications && application.status?.toLowerCase() === "pending" && (
                                 <div className="flex gap-2">
                                   <Button
                                     size="sm"
                                     variant="outline"
                                     className="text-green-600 border-green-600 hover:bg-green-50"
-                                    onClick={() => onUpdateApplication?.(application.id, "accepted")}
+                                    onClick={() => onUpdateApplication?.(application._id, "accepted")}
                                   >
                                     <Check className="size-3 mr-1" />
                                     Accept
@@ -434,7 +442,7 @@ export function PositionApplications({
                                     size="sm"
                                     variant="outline"
                                     className="text-red-600 border-red-600 hover:bg-red-50"
-                                    onClick={() => onUpdateApplication?.(application.id, "rejected")}
+                                    onClick={() => onUpdateApplication?.(application._id, "rejected")}
                                   >
                                     <X className="size-3 mr-1" />
                                     Reject
@@ -447,11 +455,11 @@ export function PositionApplications({
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-600">
                             <div>
                               <p className="text-gray-500">Applied on</p>
-                              <p>{new Date(application.appliedDate).toLocaleDateString('en-US', { 
-                                weekday: 'short', 
-                                year: 'numeric', 
-                                month: 'short', 
-                                day: 'numeric' 
+                              <p>{new Date(application.appliedAt).toLocaleDateString('en-US', {
+                                weekday: 'short',
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
                               })}</p>
                             </div>
                             <div>
@@ -463,9 +471,9 @@ export function PositionApplications({
                           <div>
                             <p className="text-gray-500 mb-1">Expertise</p>
                             <div className="flex flex-wrap gap-2">
-                              {application.expertise.map((skill, index) => (
+                              {application.expertise?.map((skill: string, index: number) => (
                                 <Badge key={index} variant="outline">{skill}</Badge>
-                              ))}
+                              )) || []}
                             </div>
                           </div>
 

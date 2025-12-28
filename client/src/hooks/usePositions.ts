@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Application, Position } from "../App";
+import type { Application, Position } from "../services/positionApi";
 import { applicationApi, positionApi } from "../services/positionApi";
 
 export type PositionFilterType = "all" | "ST" | "RA" | "TA";
