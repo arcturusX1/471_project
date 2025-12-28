@@ -1,17 +1,19 @@
 import { ConsultationRequest, User } from '../models/model.js';
-//const { ConsultationRequest, User } = pkg;
 
-// Get consultations for a specific user
+/**
+ * GET my consultations (student or faculty)
+ */
 export const getMyConsultations = async (req, res) => {
   try {
-    // req.user is populated by the auth middleware 
-    const query = req.user.roles.includes('Faculty') 
-      ? { faculty: req.user._id } 
+    const isFaculty = req.user.roles.includes('faculty');
+
+    const query = req.user.roles.includes('faculty')
+      ? { faculty: req.user._id }
       : { requester: req.user._id };
 
     const consultations = await ConsultationRequest.find(query)
-      .populate('requester', 'name email')
-      .populate('faculty', 'name email');
+      .populate('requester', 'name universityId')
+      .populate('faculty', 'name');
 
     res.json(consultations);
   } catch (error) {
@@ -19,68 +21,95 @@ export const getMyConsultations = async (req, res) => {
   }
 };
 
+/**
+ * STUDENT → REQUEST CONSULTATION
+ */
 export const requestConsultation = async (req, res) => {
   try {
-    const { facultyName, reason, preferredStart } = req.body;
+    const { faculty, reason, preferredStart } = req.body;
 
-    // 1. Convert Name to ID
-    const facultyUser = await User.findOne({ 
-      name: { $regex: new RegExp(`^${facultyName}$`, "i") }, 
-      roles: "Faculty" 
-    });
-
-    if (!facultyUser) {
-      return res.status(404).json({ message: "Faculty member not found. Please verify the name." });
+    const facultyUser = await User.findById(faculty);
+    if (!facultyUser || !facultyUser.roles.includes('faculty')) {
+      return res.status(404).json({ message: "Faculty not found" });
     }
 
-    // 2. Save using the ID
-    await ConsultationRequest.create({
+    const consultation = await ConsultationRequest.create({
       requester: req.user._id,
-      faculty: facultyUser._id, 
+      faculty: facultyUser._id,
       reason,
       preferredStart,
       status: 'Pending'
     });
 
-    res.status(201).json({ message: "Request sent successfully" });
+    res.status(201).json(consultation);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
+
+/**
+ * FACULTY → ACCEPT / DECLINE
+ */
+export const updateConsultationStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    if (!['accepted','declined','cancelled','completed'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const consultation = await ConsultationRequest.findOneAndUpdate(
+      { _id: req.params.id, faculty: req.user._id },
+      { status },
+      { new: true }
+    );
+
+    res.json(consultation);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * FACULTY SCHEDULE (accepted only)
+ */
 export const getFacultySchedule = async (req, res) => {
   try {
-    // Only fetch requests assigned to this faculty with 'Accepted' status
-    const schedule = await ConsultationRequest.find({
+    const sessions = await ConsultationRequest.find({
       faculty: req.user._id,
-      status: 'Accepted'
+      status: 'accepted'
     })
-    .populate('requester', 'name universityId email') // Get Student details
-    .sort({ preferredStart: 1 }); // Sort by soonest date
+      .populate('requester', 'name universityId')
+      .sort({ preferredStart: 1 });
 
-    res.json(schedule);
+    res.json(sessions);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
+/**
+ * STUDENT → SUBMIT FEEDBACK
+ */
 export const submitFeedback = async (req, res) => {
   try {
-    const { id } = req.params;
     const { rating, comment } = req.body;
 
-    const consultation = await ConsultationRequest.findByIdAndUpdate(
-      id,
-      { 
-        feedbackForST: { 
-          rating, 
-          comment, 
-          submittedBy: req.user._id, 
-          submittedAt: new Date() 
-        } 
+    const consultation = await ConsultationRequest.findOneAndUpdate(
+      { _id: req.params.id, requester: req.user._id },
+      {
+        feedbackForST: {
+          rating,
+          comment,
+          submittedBy: req.user._id,
+          submittedAt: new Date()
+        },
+        status: 'completed'
       },
       { new: true }
     );
+
     res.json(consultation);
   } catch (error) {
     res.status(500).json({ message: error.message });

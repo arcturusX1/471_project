@@ -45,9 +45,10 @@ const ConsultationRequests: React.FC = () => {
               <td>{req.reason}</td>
               <td>{new Date(req.preferredStart).toLocaleString()}</td>
               <td>
-                <button className="accept-btn" onClick={() => handleAction(req._id, 'Accepted')}>Accept</button>
+                <button onClick={() => handleAction(req._id, 'accepted')}>Accept</button>
+                <button onClick={() => handleAction(req._id, 'declined')}>Decline</button>
                 <button className="st-btn" onClick={() => alert("Redirecting to ST Assignment...")}>Assign ST</button>
-                <button className="delete-btn" onClick={() => handleAction(req._id, 'Deleted')}>Delete</button>
+                
               </td>
             </tr>
           ))}
