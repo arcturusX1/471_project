@@ -8,7 +8,7 @@ const Register: React.FC = () => {
     universityId: "",
     email: "",
     password: "",
-    roles: "Student",
+    roles: "student",
     department: ""
   });
 
@@ -41,13 +41,13 @@ const Register: React.FC = () => {
       <form className="auth-form" onSubmit={handleSubmit}>
         <h2>Create Account</h2>
         <input name="name" placeholder="Full Name" onChange={handleChange} required />
-        <input name="universityId" placeholder="University ID" onChange={handleChange} required />
+        <input name="universityId" placeholder="Student ID or FacultyInitial" onChange={handleChange} required />
         <input name="email" type="email" placeholder="Email" onChange={handleChange} required />
         <input name="password" type="password" placeholder="Password" onChange={handleChange} required />
         
         <select name="roles" onChange={handleChange} value={formData.roles}>
-          <option value="Student">Student</option>
-          <option value="Faculty">Faculty</option>
+          <option value="student">Student</option>
+          <option value="faculty">Faculty</option>
         </select>
 
         <input name="department" placeholder="Department" onChange={handleChange} required />

@@ -2,8 +2,13 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100vw;         /* Explicitly set width to viewport width */
   height: 100vh;
   background-color: #f4f7f6;
+  position: fixed;     /* This bypasses any parent padding/margin issues */
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
 }
 
 .auth-form {

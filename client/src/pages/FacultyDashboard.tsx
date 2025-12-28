@@ -8,7 +8,7 @@ export default function FacultyDashboard() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
   useEffect(() => {
-    if (!user || !user.role.includes('Faculty')) {
+    if (!user || !user.role.includes('faculty')) {
       navigate("/login");
     } else {
       fetchRequests();

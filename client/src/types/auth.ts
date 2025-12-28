@@ -1,5 +1,5 @@
 // client/src/types/auth.ts
-export type UserRole = "Student" | "Faculty";
+export type UserRole = "student" | "faculty";
 
 export interface RegisterData {
   name: string;

@@ -27,7 +27,7 @@ const Login: React.FC = () => {
         localStorage.setItem('user', JSON.stringify(data.user));
 
         // 3. Redirect based on role
-        if (data.user.roles.includes('Faculty')) {
+        if (data.user.roles.includes('faculty')) {
           navigate('/faculty-dashboard');
         } else {
           navigate('/student-dashboard');
