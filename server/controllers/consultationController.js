@@ -1,117 +1,147 @@
 import { ConsultationRequest, User } from '../models/model.js';
 
 /**
- * GET my consultations (student or faculty)
- */
-export const getMyConsultations = async (req, res) => {
-  try {
-    const isFaculty = req.user.roles.includes('faculty');
-
-    const query = req.user.roles.includes('faculty')
-      ? { faculty: req.user._id }
-      : { requester: req.user._id };
-
-    const consultations = await ConsultationRequest.find(query)
-      .populate('requester', 'name universityId')
-      .populate('faculty', 'name');
-
-    res.json(consultations);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-/**
- * STUDENT → REQUEST CONSULTATION
+ * Student requests a consultation
  */
 export const requestConsultation = async (req, res) => {
+  const { faculty, reason, preferredStart } = req.body;
+
   try {
-    const { faculty, reason, preferredStart } = req.body;
+    if (!faculty || !reason || !preferredStart) {
+      return res.status(400).json({ message: 'All fields are required.' });
+    }
 
     const facultyUser = await User.findById(faculty);
     if (!facultyUser || !facultyUser.roles.includes('faculty')) {
-      return res.status(404).json({ message: "Faculty not found" });
+      return res.status(404).json({ message: 'Faculty not found.' });
     }
 
-    const consultation = await ConsultationRequest.create({
+    const newRequest = await ConsultationRequest.create({
       requester: req.user._id,
-      faculty: facultyUser._id,
+      faculty,
       reason,
       preferredStart,
-      status: 'Pending'
+      status: 'requested'
     });
 
-    res.status(201).json(consultation);
+    res.status(201).json(newRequest);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Failed to create consultation request.' });
   }
 };
 
-
 /**
- * FACULTY → ACCEPT / DECLINE
+ * Get consultations for current user
  */
-export const updateConsultationStatus = async (req, res) => {
+export const getMyConsultations = async (req, res) => {
   try {
-    const { status } = req.body;
+    let consultations;
 
-    if (!['accepted','declined','cancelled','completed'].includes(status)) {
-      return res.status(400).json({ message: 'Invalid status' });
+    if (req.user.roles.includes('faculty')) {
+      consultations = await ConsultationRequest.find({ faculty: req.user._id })
+        .populate('requester', 'name universityId email')
+        .sort({ createdAt: -1 });
+    } else {
+      consultations = await ConsultationRequest.find({ requester: req.user._id })
+        .populate('faculty', 'name email')
+        .sort({ createdAt: -1 });
     }
 
-    const consultation = await ConsultationRequest.findOneAndUpdate(
-      { _id: req.params.id, faculty: req.user._id },
-      { status },
-      { new: true }
-    );
-
-    res.json(consultation);
+    res.json(consultations);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Failed to fetch consultations.' });
   }
 };
 
 /**
- * FACULTY SCHEDULE (accepted only)
+ * Faculty accepts or declines consultation
+ */
+export const updateConsultationStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!['accepted', 'declined'].includes(status)) {
+    return res.status(400).json({ message: 'Invalid status value.' });
+  }
+
+  try {
+    const consultation = await ConsultationRequest.findById(id);
+
+    if (!consultation) {
+      return res.status(404).json({ message: 'Consultation not found.' });
+    }
+
+    // Only the assigned faculty can update
+    if (!req.user.roles.includes('faculty') || consultation.faculty.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized.' });
+    }
+
+    consultation.status = status;
+
+    if (status === 'accepted') {
+      consultation.confirmedStart = consultation.preferredStart;
+    }
+
+    // Save without deleting
+    await consultation.save();
+    res.json(consultation);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to update consultation status.' });
+  }
+};
+
+/**
+ * Faculty view schedule (accepted consultations)
  */
 export const getFacultySchedule = async (req, res) => {
   try {
+    if (!req.user.roles.includes('faculty')) {
+      return res.status(403).json({ message: 'Not authorized.' });
+    }
+
     const sessions = await ConsultationRequest.find({
       faculty: req.user._id,
       status: 'accepted'
-    })
-      .populate('requester', 'name universityId')
-      .sort({ preferredStart: 1 });
+    }).populate('requester', 'name universityId')
+      .sort({ confirmedStart: 1 });
 
     res.json(sessions);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Failed to fetch schedule.' });
   }
 };
 
 /**
- * STUDENT → SUBMIT FEEDBACK
+ * Student submits feedback for ST
  */
 export const submitFeedback = async (req, res) => {
+  const { id } = req.params;
+  const { rating, comment } = req.body;
+
   try {
-    const { rating, comment } = req.body;
+    const consultation = await ConsultationRequest.findById(id);
 
-    const consultation = await ConsultationRequest.findOneAndUpdate(
-      { _id: req.params.id, requester: req.user._id },
-      {
-        feedbackForST: {
-          rating,
-          comment,
-          submittedBy: req.user._id,
-          submittedAt: new Date()
-        },
-        status: 'completed'
-      },
-      { new: true }
-    );
+    if (!consultation) return res.status(404).json({ message: 'Consultation not found.' });
 
+    if (consultation.requester.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized.' });
+    }
+
+    consultation.feedbackForST = {
+      rating,
+      comment,
+      submittedBy: req.user._id,
+      submittedAt: new Date()
+    };
+
+    await consultation.save();
     res.json(consultation);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Failed to submit feedback.' });
   }
 };

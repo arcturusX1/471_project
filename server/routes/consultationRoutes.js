@@ -1,28 +1,28 @@
 import express from 'express';
+import { protect } from '../middleware/authMiddleware.js';
 import {
   getMyConsultations,
   requestConsultation,
   getFacultySchedule,
-  submitFeedback
+  submitFeedback,
+  updateConsultationStatus
 } from '../controllers/consultationController.js';
-import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
+// Student creates a request
 router.post('/request', protect, requestConsultation);
+
+// Get consultations (student/faculty)
 router.get('/my-consultations', protect, getMyConsultations);
+
+// Faculty schedule
 router.get('/schedule', protect, getFacultySchedule);
+
+// Feedback submission (student)
 router.put('/:id/feedback', protect, submitFeedback);
 
-// faculty accept / reject
-router.put('/:id', protect, async (req, res) => {
-  const { status } = req.body;
-  const consultation = await ConsultationRequest.findByIdAndUpdate(
-    req.params.id,
-    { status },
-    { new: true }
-  );
-  res.json(consultation);
-});
+// Faculty accepts/declines consultation
+router.put('/:id', protect, updateConsultationStatus);
 
 export default router;

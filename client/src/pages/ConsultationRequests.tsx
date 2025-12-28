@@ -1,30 +1,62 @@
 import React, { useEffect, useState } from 'react';
 import './Dashboard.css';
 
+interface Consultation {
+  _id: string;
+  requester: { name: string };
+  reason: string;
+  preferredStart: string;
+  status: string;
+}
+
 const ConsultationRequests: React.FC = () => {
-  const [requests, setRequests] = useState<any[]>([]);
+  const [requests, setRequests] = useState<Consultation[]>([]);
 
   const fetchRequests = async () => {
-    const res = await fetch('http://localhost:5000/api/consultations/my-consultations', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    });
-    const data = await res.json();
-    setRequests(data);
+    try {
+      const res = await fetch('http://localhost:5000/api/consultations/my-consultations', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      const data = await res.json();
+      setRequests(data);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to fetch requests.');
+    }
   };
 
   useEffect(() => { fetchRequests(); }, []);
 
   const handleAction = async (id: string, status: string) => {
-    await fetch(`http://localhost:5000/api/consultations/${id}`, {
-      method: 'PUT',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}` 
-      },
-      body: JSON.stringify({ status })
-    });
-    fetchRequests(); // Refresh table after action
+    try {
+      const res = await fetch(`http://localhost:5000/api/consultations/${id}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}` 
+        },
+        body: JSON.stringify({ status })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.message);
+        return;
+      }
+
+      const updatedConsultation = await res.json();
+
+    // Optimistically update frontend state
+      setRequests(prev =>
+        prev.map(r => r._id === updatedConsultation._id ? updatedConsultation : r)
+      );
+
+    } catch (error) {
+      console.error(error);
+      alert('Failed to update consultation status.');
+    }
   };
+
 
   return (
     <div className="dashboard-container">
@@ -39,7 +71,7 @@ const ConsultationRequests: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {requests.map((req) => (
+          {requests.map(req => (
             <tr key={req._id}>
               <td>{req.requester?.name}</td>
               <td>{req.reason}</td>
@@ -47,8 +79,6 @@ const ConsultationRequests: React.FC = () => {
               <td>
                 <button onClick={() => handleAction(req._id, 'accepted')}>Accept</button>
                 <button onClick={() => handleAction(req._id, 'declined')}>Decline</button>
-                <button className="st-btn" onClick={() => alert("Redirecting to ST Assignment...")}>Assign ST</button>
-                
               </td>
             </tr>
           ))}

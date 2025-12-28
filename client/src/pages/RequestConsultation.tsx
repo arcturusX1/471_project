@@ -2,49 +2,65 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Auth.css';
 
+interface Faculty {
+  _id: string;
+  name: string;
+}
+
 const RequestConsultation: React.FC = () => {
-  const [facultyList, setFacultyList] = useState<{_id: string, name: string}[]>([]);
+  const [facultyList, setFacultyList] = useState<Faculty[]>([]);
   const [formData, setFormData] = useState({
-    facultyId: "", // This will hold the ID while the user sees the Name
-    reason: "",    // This is the "Course" input
-    date: ""
+    facultyId: '',
+    reason: '',
+    date: ''
   });
   const navigate = useNavigate();
 
-  // Load faculty names when the page opens
+  // Fetch all faculty
   useEffect(() => {
     const fetchFaculty = async () => {
-      const res = await fetch('http://localhost:5000/api/auth/faculty');
-      const data = await res.json();
-      setFacultyList(data);
+      try {
+        const res = await fetch('http://localhost:5000/api/auth/faculty', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        const data = await res.json();
+        setFacultyList(data);
+      } catch (err) {
+        console.error(err);
+        alert('Failed to fetch faculty.');
+      }
     };
     fetchFaculty();
   }, []);
 
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
-
     try {
-      const response = await fetch('http://localhost:5000/api/consultations/request', {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5000/api/consultations/request', {
         method: 'POST',
-        headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` 
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          faculty: formData.facultyId,
-          reason: formData.reason, // The student typed the Course here
+          faculty: formData.facultyId,  // Must match backend
+          reason: formData.reason,
           preferredStart: formData.date
-        }),
+        })
       });
 
-      if (response.ok) {
-        alert("Request Sent Successfully!");
+      if (res.ok) {
+        alert('Request sent successfully!');
         navigate('/student-dashboard');
+      } else {
+        const err = await res.json();
+        alert(err.message || 'Failed to send request.');
       }
     } catch (error) {
-      console.error("Request failed", error);
+      console.error(error);
+      alert('Something went wrong.');
     }
   };
 
@@ -52,18 +68,19 @@ const RequestConsultation: React.FC = () => {
     <div className="auth-container">
       <form className="auth-form" onSubmit={handleSubmit}>
         <h2>Request Consultation</h2>
-        
-        <label>Course Name (Reason)</label>
-        <input 
-          name="reason" 
-          placeholder="e.g. Data Structures" 
-          onChange={(e) => setFormData({...formData, reason: e.target.value})} 
-          required 
+
+        <label>Course Name / Reason</label>
+        <input
+          placeholder="e.g. Data Structures"
+          value={formData.reason}
+          onChange={e => setFormData({ ...formData, reason: e.target.value })}
+          required
         />
 
         <label>Select Faculty</label>
-        <select 
-          onChange={(e) => setFormData({...formData, facultyId: e.target.value})} 
+        <select
+          value={formData.facultyId}
+          onChange={e => setFormData({ ...formData, facultyId: e.target.value })}
           required
         >
           <option value="">-- Choose a Faculty --</option>
@@ -73,10 +90,11 @@ const RequestConsultation: React.FC = () => {
         </select>
 
         <label>Preferred Date & Time</label>
-        <input 
-          type="datetime-local" 
-          onChange={(e) => setFormData({...formData, date: e.target.value})} 
-          required 
+        <input
+          type="datetime-local"
+          value={formData.date}
+          onChange={e => setFormData({ ...formData, date: e.target.value })}
+          required
         />
 
         <button type="submit">Submit Request</button>

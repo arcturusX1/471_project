@@ -1,16 +1,32 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
+import './Dashboard.css';
 
-export default function MyConsultations() {
-  const [data, setData] = useState<any[]>([]);
+interface Consultation {
+  _id: string;
+  faculty: { name: string };
+  reason: string;
+  preferredStart: string;
+  status: string;
+  feedbackForST?: { submittedAt?: string };
+}
+
+const MyConsultations: React.FC = () => {
+  const [data, setData] = useState<Consultation[]>([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/consultations/my-consultations", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`
+    const fetchData = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/consultations/my-consultations", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        });
+        const result = await res.json();
+        setData(result);
+      } catch (err) {
+        console.error(err);
+        alert('Failed to fetch your consultations.');
       }
-    })
-      .then(res => res.json())
-      .then(setData);
+    };
+    fetchData();
   }, []);
 
   return (
@@ -26,11 +42,13 @@ export default function MyConsultations() {
           <p><strong>Time:</strong> {new Date(c.preferredStart).toLocaleString()}</p>
           <p><strong>Status:</strong> {c.status}</p>
 
-          {c.status === 'Accepted' && !c.feedbackForST && (
+          {c.status === 'accepted' && !c.feedbackForST?.submittedAt && (
             <button>Give Feedback</button>
           )}
         </div>
       ))}
     </div>
   );
-}
+};
+
+export default MyConsultations;
