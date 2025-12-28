@@ -181,6 +181,12 @@ export function Dashboard({ userRole, onNavigate, onViewProject, projects, evalu
                   Manage Users
                 </button>
               )}
+              <button
+                onClick={() => onNavigate('projects')}
+                className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+              >
+                View Evaluations
+              </button>
               {userRole !== 'faculty' && userRole !== 'admin' && (
                 <button
                   onClick={() => onNavigate('reservations')}

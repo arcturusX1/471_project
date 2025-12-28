@@ -1,5 +1,6 @@
 
 import mongoose from "mongoose";
+import { PROJECT_STATUS } from '../config/constants.js';
 
 const evaluationSchema = new mongoose.Schema({
   evaluatedBy: { type: String, required: true },
@@ -17,7 +18,7 @@ const projectSchema = new mongoose.Schema(
     supervisor: { type: String, default: null }, // User ID or string, nullable
     status: {
       type: String,
-      enum: ["draft", "submitted", "approved", "rejected"],
+      enum: Object.values(PROJECT_STATUS),
       default: "draft",
     },
     evaluation: evaluationSchema,

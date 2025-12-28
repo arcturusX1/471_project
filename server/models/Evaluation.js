@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { ASSESSOR_ROLES, EVALUATION_STATUS } from '../config/constants.js';
 
 const criterionSchema = new mongoose.Schema({
   name: {
@@ -38,7 +39,7 @@ const evaluationSchema = new mongoose.Schema({
   },
   assessorRole: {
     type: String,
-    enum: ['Supervisor', 'Co-Supervisor', 'ST', 'RA', 'TA', 'External Examiner'],
+    enum: Object.values(ASSESSOR_ROLES),
     required: true
   },
   criteria: {
@@ -63,7 +64,7 @@ const evaluationSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'Submitted'],
+    enum: Object.values(EVALUATION_STATUS),
     default: 'Pending'
   },
   submittedAt: {
