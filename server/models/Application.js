@@ -19,4 +19,5 @@ const applicationSchema = new mongoose.Schema({
   coverLetter: { type: String, required: true }
 });
 
-export default mongoose.model('Application', applicationSchema);
+const Application = mongoose.models.Application || mongoose.model('Application', applicationSchema);
+export default Application;

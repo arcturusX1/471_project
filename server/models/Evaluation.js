@@ -91,4 +91,5 @@ evaluationSchema.pre('save', function(next) {
   next();
 });
 
-export default mongoose.model('Evaluation', evaluationSchema);
+const Evaluation = mongoose.models.Evaluation || mongoose.model('Evaluation', evaluationSchema);
+export default Evaluation;

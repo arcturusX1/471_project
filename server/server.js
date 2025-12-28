@@ -7,16 +7,19 @@ import connectDB from "./config/db.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import { mockAuth, requireRole } from "./middleware/mockAuth.js";
-import authRoutes from "./routes/auth.js";
-
 import authRoutes from "./routes/authRoutes.js";
 import consultationRoutes from './routes/consultationRoutes.js';
-import cors from "cors";
+import projectRoutes from "./routes/projects.js";
+import evaluationRoutes from "./routes/evaluations.js";
+import bookingRoutes from "./routes/bookings.js";
+import positionRoutes from "./routes/positions.js";
+import Application from "./models/Application.js";
+
+
 
 
 // Applications routes (inline for now)
 const applicationRoutes = express.Router();
-import Application from "./models/Application.js";
 
 // Mock positions data to derive positionType from positionId
 const mockPositions = [
@@ -103,18 +106,14 @@ applicationRoutes.patch('/:id', mockAuth, requireRole('admin', 'faculty'), async
 });
 
 console.log('Application routes created successfully');
-import projectRoutes from "./routes/projects.js";
-import evaluationRoutes from "./routes/evaluations.js";
-import bookingRoutes from "./routes/bookings.js";
-import positionRoutes from "./routes/positions.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables with fallback
+// Load environment variables from server/.env (ensures correct MONGODB_URI in this folder)
 dotenv.config({ path: path.join(__dirname, '.env') });
 
-// Set default environment variables if not provided
+// Set sensible defaults for dev if env not provided
 process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/campus-management';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'default-jwt-secret-change-in-production';
 process.env.PORT = process.env.PORT || '5000';
@@ -122,7 +121,6 @@ process.env.PORT = process.env.PORT || '5000';
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(cors());
 
 
 // Health check endpoint
@@ -157,14 +155,10 @@ const startServer = async () => {
 
 startServer();
 
-// Routes
-app.use('/api/auth', authRoutes);
+// Ensure consultations route is available
 app.use('/api/consultations', consultationRoutes);
 
 app.get("/", (req, res) => {
   res.send("APCMS backend running...");
 });
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
