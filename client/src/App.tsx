@@ -16,10 +16,10 @@ import { projectApi } from "./services/projectService";
 import { evaluationApi } from "./services/evaluationApi";
 import { applicationApi } from "./services/positionApi";
 import { PositionApplications } from "./components/PositionApplications";
-import { BookOpen, Briefcase, Building, Calendar, MonitorSmartphone, Users, LogOut } from "lucide-react";
+import { BookOpen, Building, Calendar, MonitorSmartphone, Users } from "lucide-react";
 import { ModeToggle } from "./components/mode-toggle";
 
-export type UserRole = "admin" | "faculty" | "student";
+export type UserRole = "admin" | "faculty" | "student" | "assessor";
 export type AssessorRole = "Supervisor" | "Co-Supervisor" | "ST" | "RA" | "TA" | "External Examiner";
 export type EvaluationStatus = "Pending" | "Submitted";
 
@@ -34,7 +34,18 @@ export interface Project {
   startDate: string;
   endDate: string;
   supervisor: string;
+  evaluation?: {
+    marks?: number;
+    remarks?: string;
+  };
 }
+
+export type Criterion = {
+  name: string;
+  maxScore: number;
+  score?: number;
+  comment: string;
+};
 
 export interface Evaluation {
   id: string;
@@ -42,12 +53,7 @@ export interface Evaluation {
   assessorId: string;
   assessorName: string;
   assessorRole: string;
-  criteria: Array<{
-    name: string;
-    maxScore: number;
-    score?: number;
-    comment: string;
-  }>;
+  criteria: Criterion[];
   finalComment: string;
   totalScore: number;
   status: 'Pending' | 'Submitted';
@@ -427,43 +433,4 @@ export default function App() {
     </div>
   );
 }
-
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import StudentDashboard from './pages/StudentDashboard';
-import FacultyDashboard from './pages/FacultyDashboard';
-import RequestConsultation from './pages/RequestConsultation';
-import ConsultationRequests from './pages/ConsultationRequests';
-import FacultySchedule from './pages/FacultySchedule';
-
-function App() {
-  return (
-    <Router>
-      <Navbar /> {/* Navbar now found */}
-      <div className="content">
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          
-          {/* Dashboard Routes */}
-          <Route path="/student-dashboard" element={<StudentDashboard />} />
-          <Route path="/faculty-dashboard" element={<FacultyDashboard />} />
-
-          {/* Consultation Routes */}
-          <Route path="/request-consultation" element={<RequestConsultation />} />
-          <Route path="/consultation-requests" element={<ConsultationRequests />} />
-          <Route path="/faculty-schedule" element={<FacultySchedule />} />
-
-          {/* Use Navigate for default redirect */}
-          <Route path="/" element={<Navigate to="/login" />} />
-        </Routes>
-      </div>
-    </Router>
-  );
-}
-
-export default App;
 

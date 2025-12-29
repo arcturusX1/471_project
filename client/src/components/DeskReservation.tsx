@@ -75,7 +75,8 @@ export function DeskReservation({ reservations, onReserve }: DeskReservationProp
       startTime,
       endTime,
       userName,
-      userType
+      userType,
+      purpose: "Desk reservation"
     };
 
     onReserve(newReservation);

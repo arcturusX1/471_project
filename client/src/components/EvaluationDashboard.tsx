@@ -40,8 +40,8 @@ export function EvaluationDashboard({
         );
         return {
           ...project,
-          assessorRole: evaluation?.assessorRole,
-          evaluationStatus: evaluation?.status || 'Pending',
+          assessorRole: evaluation?.assessorRole as AssessorRole,
+          evaluationStatus: (evaluation?.status as EvaluationStatus) || 'Pending',
         };
       });
     } else {

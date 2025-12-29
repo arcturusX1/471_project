@@ -58,7 +58,7 @@ export function EvaluationFormModal({ evaluation, project, onClose, onSubmit }: 
 
     try {
       // Update evaluation in MongoDB
-      const updateData = {
+      const updateData: Partial<Evaluation> = {
         criteria: criteria,
         finalComment: finalComment,
         status: 'Submitted'
