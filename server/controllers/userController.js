@@ -40,7 +40,7 @@ exports.registerUser = async (req, res) => {
       universityId,
       email,
       passwordHash,
-      roles: roles ? [roles] : ["Student"], // Model expects an array
+      roles: Array.isArray(roles) ? roles : roles ? [roles] : ["Student"],
     };
 
     // Only add profile if department is provided
@@ -109,21 +109,18 @@ exports.loginUser = async (req, res) => {
 
     const token = jwt.sign({ id: user._id.toString() }, JWT_SECRET, { expiresIn: "30d" });
 
-      res.json({
-        token,
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          universityId: user.universityId,
-          role: user.roles[0], // Taking the first role from the array
-          roles: user.roles,
-          department: user.profile?.department || "N/A",
-        },
-      });
-    } else {
-      res.status(401).json({ message: "Invalid email or password" });
-    }
+    return res.json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        universityId: user.universityId,
+        role: Array.isArray(user.roles) ? user.roles[0] : user.roles,
+        roles: user.roles,
+        department: user.profile?.department || "N/A",
+      },
+    });
   } catch (error) {
     console.error("Error logging in:", error);
     res.status(500).json({ message: error.message });
