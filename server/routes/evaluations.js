@@ -1,6 +1,5 @@
 import express from 'express';
-import Evaluation from '../models/Evaluation.js';
-import Project from '../models/Project.js';
+import { Evaluation, Project } from '../models/model.js';
 import { mockAuth, requireRole } from '../middleware/mockAuth.js';
 
 const router = express.Router();

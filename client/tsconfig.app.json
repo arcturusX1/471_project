@@ -24,10 +24,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-<<<<<<< HEAD
   "include": ["src"],
   "exclude": ["src/supabase"]
-=======
-  "include": ["src"]
->>>>>>> 43c3f82a51fe88eaa6b44b36b14fddd44e57aaff
 }

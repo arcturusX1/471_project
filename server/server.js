@@ -13,7 +13,7 @@ import projectRoutes from "./routes/projects.js";
 import evaluationRoutes from "./routes/evaluations.js";
 import bookingRoutes from "./routes/bookings.js";
 import positionRoutes from "./routes/positions.js";
-import Application from "./models/Application.js";
+import { Application } from "./models/model.js";
 
 
 
