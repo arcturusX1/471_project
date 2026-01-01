@@ -4,6 +4,36 @@ import { mockAuth, requireRole } from "../middleware/mockAuth.js";
 
 const router = express.Router();
 
+// =================================================================
+// HELPER: STATUS BADGE LOGIC (Fixed Priority from zebin_branch)
+// =================================================================
+const normalizeStatus = (p) => {
+    // 1. Get raw values
+    const stage = p.stage ? p.stage.toLowerCase().trim() : '';
+    const status = p.status ? p.status.toLowerCase().trim() : '';
+
+    // 2. CHECK "COMPLETED" (Green)
+    if (stage === 'final_draft_accepted') return 'completed';
+    if (status === 'completed' || status === 'final') return 'completed';
+
+    // 3. CHECK "IN PROGRESS" (Blue)
+    // FIX: We check BOTH fields. If either says "in progress", return 'in-progress'.
+    if (stage === 'draft_approved') return 'in-progress';
+    if (status === 'in-progress' || status === 'in progress') return 'in-progress';
+    if (status === 'accepted_by_supervisor') return 'in-progress';
+    
+    // Legacy check: some data might store "In Progress" with different casing
+    if (status.includes('in progress')) return 'in-progress';
+
+    // 4. CHECK "UNDER REVIEW" (Orange)
+    if (stage === 'uploaded_draft') return 'under_review';
+    if (status === 'under_review' || status === 'under-review') return 'under_review';
+    if (status.includes('under review')) return 'under_review';
+    
+    // 5. DEFAULT -> PROPOSAL (Yellow)
+    return 'proposal';
+};
+
 // Test endpoint to verify routing works
 router.get("/test", (req, res) => {
   console.log('🧪 TEST ENDPOINT CALLED');
@@ -79,12 +109,19 @@ router.get("/mine", mockAuth, async (req, res) => {
       ]
     }).sort({ createdAt: -1 });
 
+    // Apply normalized status to each project
+    const normalizedProjects = projects.map(project => {
+      const projectObj = project.toObject();
+      projectObj.normalizedStatus = normalizeStatus(projectObj);
+      return projectObj;
+    });
+
     console.log(`📋 RETRIEVED ${projects.length} PROJECTS FOR USER ${userId}`);
 
     res.json({
       success: true,
       count: projects.length,
-      data: projects
+      data: normalizedProjects
     });
   } catch (error) {
     console.error('❌ FAILED TO GET USER PROJECTS:', error);
@@ -102,12 +139,20 @@ router.get("/mine", mockAuth, async (req, res) => {
 router.get("/", mockAuth, requireRole('faculty', 'admin'), async (req, res) => {
   try {
     const projects = await Project.find({}).sort({ createdAt: -1 });
+    
+    // Apply normalized status to each project
+    const normalizedProjects = projects.map(project => {
+      const projectObj = project.toObject();
+      projectObj.normalizedStatus = normalizeStatus(projectObj);
+      return projectObj;
+    });
+    
     console.log(`📋 RETRIEVED ${projects.length} PROJECTS FROM MONGODB`);
 
     res.json({
       success: true,
       count: projects.length,
-      data: projects
+      data: normalizedProjects
     });
   } catch (error) {
     console.error('❌ FAILED TO GET ALL PROJECTS:', error);

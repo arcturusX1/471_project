@@ -1,4 +1,4 @@
-import { LayoutDashboard, FolderKanban, Calendar, Users, FileText, Settings, Briefcase } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Calendar, Users, FileText, Settings, Briefcase, MessageSquare, Users2, MapPin, Search } from 'lucide-react';
 import type { PageView, UserRole } from '../App';
 
 interface SidebarProps {
@@ -39,6 +39,30 @@ export function Sidebar({ currentPage, userRole, onNavigate }: SidebarProps) {
       label: 'Positions & Applications',
       icon: <Briefcase className="w-5 h-5" />,
       roles: ['admin', 'faculty', 'student'],
+    },
+    {
+      id: 'faculty-directory',
+      label: 'Faculty Directory',
+      icon: <Users2 className="w-5 h-5" />,
+      roles: ['admin', 'faculty', 'student'],
+    },
+    {
+      id: 'group-posts',
+      label: 'Team Finder',
+      icon: <Search className="w-5 h-5" />,
+      roles: ['admin', 'faculty', 'student'],
+    },
+    {
+      id: 'messaging',
+      label: 'Messages',
+      icon: <MessageSquare className="w-5 h-5" />,
+      roles: ['admin', 'faculty', 'student'],
+    },
+    {
+      id: 'locations',
+      label: 'Location Management',
+      icon: <MapPin className="w-5 h-5" />,
+      roles: ['admin', 'faculty'],
     },
     {
       id: 'users',

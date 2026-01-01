@@ -16,6 +16,10 @@ import { projectApi } from "./services/projectService";
 import { evaluationApi } from "./services/evaluationApi";
 import { applicationApi } from "./services/positionApi";
 import { PositionApplications } from "./components/PositionApplications";
+import Studentview from "./components/Studentview";
+import Messaging from "./components/Messaging";
+import TeamFinder from "./components/TeamFinder";
+import LocationManagement from "./components/LocationManagement";
 import { BookOpen, Building, Calendar, MonitorSmartphone, Users } from "lucide-react";
 import { ModeToggle } from "./components/mode-toggle";
 
@@ -74,7 +78,7 @@ export interface Reservation {
   purpose: string;
 }
 
-export type PageView = "dashboard" | "projects" | "project-details" | "reservations" | "positions" | "users";
+export type PageView = "dashboard" | "projects" | "project-details" | "reservations" | "positions" | "users" | "faculty-directory" | "group-posts" | "messaging" | "locations";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<PageView>("dashboard");
@@ -427,6 +431,20 @@ export default function App() {
               }}
             />
           )}
+          {currentPage === "faculty-directory" && (
+            <div className="max-w-7xl mx-auto">
+              <h2 className="text-2xl font-bold mb-6">Faculty Directory</h2>
+              <Studentview onChatStart={(faculty) => console.log('Start chat with:', faculty)} />
+            </div>
+          )}
+          {currentPage === "group-posts" && <TeamFinder />}
+          {currentPage === "messaging" && (
+            <div className="max-w-7xl mx-auto">
+              <h2 className="text-2xl font-bold mb-6">Messages</h2>
+              <Messaging />
+            </div>
+          )}
+          {currentPage === "locations" && <LocationManagement />}
         </main>
       </div>
       <Toaster />

@@ -19,6 +19,7 @@ import positionRoutes from "./routes/positions.js";
 import locationRoutes from "./routes/locationRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import groupPostRoutes from "./routes/groupPostRoutes.js";
+import facultyRoutes from "./routes/facultyRoutes.js";
 
 import Application from "./models/Application.js";
 
@@ -157,6 +158,7 @@ app.use('/api/positions', positionRoutes);
 app.use("/api/locations", locationRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/group-posts", groupPostRoutes);
+app.use("/api/faculty", facultyRoutes);
 
 const startServer = async () => {
     try {

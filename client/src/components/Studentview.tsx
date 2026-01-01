@@ -28,7 +28,7 @@ export default function StudentView({ onChatStart }: StudentViewProps) {
   useEffect(() => {
     const fetchFaculty = async () => {
       try {
-        const res = await fetch('http://localhost:1532/api/faculty/all');
+        const res = await fetch('/api/faculty/all');
         const data = await res.json();
         setFacultyList(data);
       } catch (error) {

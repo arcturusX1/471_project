@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const mongoose = require('mongoose'); 
-const { User } = require('../models/model.js');
+import mongoose from 'mongoose'; 
+import { User } from '../models/model.js';
 
 // --- HELPER: Day Mapping ---
 const daysMap = { 'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6 };
@@ -127,4 +127,4 @@ router.put('/update', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
