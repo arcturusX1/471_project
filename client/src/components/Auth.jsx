@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "./Auth.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:1202";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 function Auth({ onLogin }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -48,17 +48,17 @@ function Auth({ onLogin }) {
       const endpoint = isLogin ? "/login" : "/register";
       const body = isLogin
         ? {
-            email: formData.email.trim(),
-            password: formData.password,
-          }
+          email: formData.email.trim(),
+          password: formData.password,
+        }
         : {
-            name: formData.name.trim(),
-            universityId: formData.universityId.trim(),
-            email: formData.email.trim(),
-            password: formData.password,
-            roles: formData.roles || "Student",
-            ...(formData.department?.trim() && { department: formData.department.trim() }),
-          };
+          name: formData.name.trim(),
+          universityId: formData.universityId.trim(),
+          email: formData.email.trim(),
+          password: formData.password,
+          roles: formData.roles || "Student",
+          ...(formData.department?.trim() && { department: formData.department.trim() }),
+        };
 
       const res = await fetch(`${API_URL}/api/users${endpoint}`, {
         method: "POST",

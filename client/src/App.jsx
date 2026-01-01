@@ -5,7 +5,7 @@ import GroupFinder from "./components/GroupFinder";
 import LocationFinder from "./components/LocationFinder";
 import Auth from "./components/Auth";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:1202";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 function App() {
   const [activeView, setActiveView] = useState("group-finder");
@@ -128,7 +128,7 @@ function ProjectTracker() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:1202";
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   const formatDate = (dateString) => {
     if (!dateString) return "";

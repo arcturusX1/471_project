@@ -1,13 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import { Html5Qrcode } from "html5-qrcode";
 import "./QRScanner.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:1202";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 function QRScanner({ onScanSuccess, onClose }) {
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState("");
+  const [Html5Qrcode, setHtml5Qrcode] = useState(null);
   const html5QrCodeRef = useRef(null);
+
+  // Load html5-qrcode dynamically
+  useEffect(() => {
+    import("html5-qrcode").then((module) => {
+      setHtml5Qrcode(() => module.Html5Qrcode);
+    }).catch((err) => {
+      console.error("Failed to load html5-qrcode:", err);
+      setError("Failed to load QR scanner library");
+    });
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -31,6 +41,11 @@ function QRScanner({ onScanSuccess, onClose }) {
   }, []);
 
   const startScanning = async () => {
+    if (!Html5Qrcode) {
+      setError("QR scanner library not loaded yet. Please wait a moment and try again.");
+      return;
+    }
+
     try {
       setError("");
       const html5QrCode = new Html5Qrcode("qr-reader");
@@ -38,8 +53,8 @@ function QRScanner({ onScanSuccess, onClose }) {
 
       // Try to get camera permissions first
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: "environment" } 
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" }
         });
         // Stop the stream immediately, html5-qrcode will start its own
         stream.getTracks().forEach(track => track.stop());
@@ -123,7 +138,7 @@ function QRScanner({ onScanSuccess, onClose }) {
       }
 
       const location = await res.json();
-      
+
       // Call success callback
       if (onScanSuccess) {
         onScanSuccess(location);
@@ -163,15 +178,15 @@ function QRScanner({ onScanSuccess, onClose }) {
             <div className="error-message">
               {error}
               <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
-                <button 
-                  className="retry-btn" 
+                <button
+                  className="retry-btn"
                   onClick={startScanning}
                   style={{ flex: 1 }}
                 >
                   Try Again
                 </button>
-                <button 
-                  className="close-error-btn" 
+                <button
+                  className="close-error-btn"
                   onClick={handleClose}
                   style={{ flex: 1 }}
                 >

@@ -3,7 +3,7 @@ import PostForm from "./PostForm";
 import PostCard from "./PostCard";
 import "./GroupFinder.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:1202";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 function GroupFinder({ user, token }) {
   const [activeTab, setActiveTab] = useState("public");
