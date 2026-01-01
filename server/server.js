@@ -1,12 +1,17 @@
 // server/server.js
 import express from "express";
 import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import consultationRoutes from './routes/consultationRoutes.js';
 import cors from "cors";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+dotenv.config({ path: join(__dirname, '.env') });
 connectDB();
 
 const app = express();
