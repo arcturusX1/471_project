@@ -1,4 +1,4 @@
-import { LayoutDashboard, FolderKanban, Calendar, Users, FileText, Settings, Briefcase, MessageSquare, Users2, MapPin, Search } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Calendar, Users, FileText, Settings, Briefcase, MessageSquare, Users2, MapPin, Search, QrCode } from 'lucide-react';
 import type { PageView, UserRole } from '../App';
 
 interface SidebarProps {
@@ -63,6 +63,12 @@ export function Sidebar({ currentPage, userRole, onNavigate }: SidebarProps) {
       label: 'Location Management',
       icon: <MapPin className="w-5 h-5" />,
       roles: ['admin', 'faculty'],
+    },
+    {
+      id: 'location-finder',
+      label: 'Location Finder',
+      icon: <QrCode className="w-5 h-5" />,
+      roles: ['admin', 'faculty', 'student'],
     },
     {
       id: 'users',

@@ -20,6 +20,7 @@ import Studentview from "./components/Studentview";
 import Messaging from "./components/Messaging";
 import TeamFinder from "./components/TeamFinder";
 import LocationManagement from "./components/LocationManagement";
+import LocationFinder from "./components/LocationFinder";
 import { BookOpen, Building, Calendar, MonitorSmartphone, Users } from "lucide-react";
 import { ModeToggle } from "./components/mode-toggle";
 
@@ -78,7 +79,7 @@ export interface Reservation {
   purpose: string;
 }
 
-export type PageView = "dashboard" | "projects" | "project-details" | "reservations" | "positions" | "users" | "faculty-directory" | "group-posts" | "messaging" | "locations";
+export type PageView = "dashboard" | "projects" | "project-details" | "reservations" | "positions" | "users" | "faculty-directory" | "group-posts" | "messaging" | "locations" | "location-finder";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<PageView>("dashboard");
@@ -445,6 +446,7 @@ export default function App() {
             </div>
           )}
           {currentPage === "locations" && <LocationManagement />}
+          {currentPage === "location-finder" && <LocationFinder />}
         </main>
       </div>
       <Toaster />
