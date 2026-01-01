@@ -123,7 +123,15 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'default-jwt-secret-change-in
 process.env.PORT = process.env.PORT || '5000';
 
 const app = express();
-app.use(cors());
+
+// Configure CORS properly
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:8080'], // Add your client URLs
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-role']
+}));
+
 app.use(express.json());
 
 // Health check endpoint
@@ -146,7 +154,6 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/positions', positionRoutes);
 
 // Yasir branch routes
-app.use("/api/projects", projectRoutes);
 app.use("/api/locations", locationRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/group-posts", groupPostRoutes);

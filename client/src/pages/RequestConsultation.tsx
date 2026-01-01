@@ -20,7 +20,7 @@ const RequestConsultation: React.FC = () => {
   useEffect(() => {
     const fetchFaculty = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/auth/faculty', {
+        const res = await fetch('/api/auth/faculty', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         const data = await res.json();
@@ -38,7 +38,7 @@ const RequestConsultation: React.FC = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/consultations/request', {
+      const res = await fetch('/api/consultations/request', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -16,7 +16,7 @@ const MyConsultations: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/consultations/my-consultations", {
+        const res = await fetch("/api/consultations/my-consultations", {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         });
         const result = await res.json();

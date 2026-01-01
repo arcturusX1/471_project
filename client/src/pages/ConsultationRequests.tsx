@@ -14,7 +14,7 @@ const ConsultationRequests: React.FC = () => {
 
   const fetchRequests = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/consultations/my-consultations', {
+      const res = await fetch('/api/consultations/my-consultations', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       const data = await res.json();
@@ -29,7 +29,7 @@ const ConsultationRequests: React.FC = () => {
 
   const handleAction = async (id: string, status: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/consultations/${id}`, {
+      const res = await fetch(`/api/consultations/${id}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',

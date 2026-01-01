@@ -16,7 +16,7 @@ const FacultySchedule: React.FC = () => {
   useEffect(() => {
     const fetchSchedule = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/consultations/schedule', {
+        const res = await fetch('/api/consultations/schedule', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         const data = await res.json();

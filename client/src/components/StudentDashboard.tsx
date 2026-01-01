@@ -27,7 +27,7 @@ export default function StudentDashboard() {
 
   const fetchConsultations = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/consultations/my-consultations', {
+      const response = await fetch('/api/consultations/my-consultations', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (response.ok) {

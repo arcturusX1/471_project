@@ -37,7 +37,7 @@ export default function FacultyDashboard() {
 
   const fetchRequests = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/consultations/my-consultations', {
+      const response = await fetch('/api/consultations/my-consultations', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       const data = await response.json();
@@ -51,7 +51,7 @@ export default function FacultyDashboard() {
   const fetchSettings = async () => {
     if (user && user.id) {
       try {
-        const res = await fetch(`http://localhost:5000/api/faculty/${user.id}`);
+        const res = await fetch(`/api/faculty/${user.id}`);
         if (res.ok) {
           const data = await res.json();
           if(data.availability) setAvailability(data.availability);
@@ -64,7 +64,7 @@ export default function FacultyDashboard() {
 
   const handleSaveSettings = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/faculty/update', {
+      const res = await fetch('/api/faculty/update', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

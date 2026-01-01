@@ -8,7 +8,7 @@ export interface User {
   phone?: string;
 }
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = '/api';
 
 class AuthService {
   private getAuthToken(): string | null {
