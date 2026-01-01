@@ -1,17 +1,17 @@
-const { User } = require("../models/model");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+import { User } from "../models/model.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
-exports.registerUser = async (req, res) => {
+export const registerUser = async (req, res) => {
   const { name, universityId, email, password, roles, department } = req.body;
 
   try {
     // Validate required fields
     if (!name || !universityId || !email || !password) {
-      return res.status(400).json({ 
-        message: "Missing required fields: name, universityId, email, and password are required" 
+      return res.status(400).json({
+        message: "Missing required fields: name, universityId, email, and password are required"
       });
     }
 
@@ -80,7 +80,7 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-exports.loginUser = async (req, res) => {
+export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   try {
@@ -127,7 +127,7 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-exports.getAllFaculty = async (req, res) => {
+export const getAllFaculty = async (req, res) => {
   try {
     // Find all users who have "Faculty" in their roles array
     const facultyMembers = await User.find({ roles: "Faculty" }).select("name _id");
@@ -139,7 +139,7 @@ exports.getAllFaculty = async (req, res) => {
 };
 
 // Get user by ID
-exports.getUser = async (req, res) => {
+export const getUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select("-passwordHash");
     if (!user) {
@@ -153,12 +153,58 @@ exports.getUser = async (req, res) => {
 };
 
 // Get all users
-exports.getAllUsers = async (req, res) => {
+export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select("-passwordHash");
     res.json(users);
   } catch (err) {
     console.error("Error fetching users:", err);
     res.status(500).json({ error: "Failed to fetch users" });
+  }
+};
+
+// Additional CRUD functions for userRoutes.js
+export const getUsers = getAllUsers;
+
+export const getUserById = getUser;
+
+export const createUser = registerUser;
+
+export const updateUser = async (req, res) => {
+  try {
+    const { name, universityId, email, roles, department } = req.body;
+    const updateData = { name, universityId, email, roles };
+
+    if (department) {
+      updateData.profile = { department };
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true, runValidators: true }
+    ).select("-passwordHash");
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json(user);
+  } catch (err) {
+    console.error("Error updating user:", err);
+    res.status(500).json({ error: "Failed to update user" });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.json({ success: true, id: req.params.id });
+  } catch (err) {
+    console.error("Error deleting user:", err);
+    res.status(500).json({ error: "Failed to delete user" });
   }
 };

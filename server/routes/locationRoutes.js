@@ -1,20 +1,14 @@
-const express = require("express");
-const locationController = require("../controllers/locationController");
+import express from "express";
+import * as locationController from "../controllers/locationController.js";
 
 const router = express.Router();
 
 // CRUD
-router.post("/", locationController.createLocation);
 router.get("/", locationController.getLocations);
 router.get("/:id", locationController.getLocationById);
+router.get("/qr/:qrCodeRef", locationController.getLocationByQr);
+router.post("/", locationController.createLocation);
 router.put("/:id", locationController.updateLocation);
 router.delete("/:id", locationController.deleteLocation);
 
-// QR-based lookup
-router.get("/qr/:qrCodeRef", locationController.getLocationByQr);
-
-module.exports = router;
-
-
-
-
+export default router;

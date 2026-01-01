@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const groupPostSchema = new mongoose.Schema(
   {
@@ -36,16 +36,16 @@ groupPostSchema.pre("save", function (next) {
   if (this.members && Array.isArray(this.members)) {
     this.currentMembers = this.members.length;
   }
-  
+
   if (this.currentMembers >= this.maxMembers) {
     this.status = "filled";
     this.isVisible = false; // Hide from public feed when filled
   }
-  
+
   if (typeof next === "function") {
     next();
   }
 });
 
-module.exports = mongoose.model("GroupPost", groupPostSchema);
+export default mongoose.model("GroupPost", groupPostSchema);
 

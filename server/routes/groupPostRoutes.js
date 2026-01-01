@@ -1,15 +1,15 @@
-const express = require("express");
-const router = express.Router();
-const groupPostController = require("../controllers/groupPostController");
+import express from "express";
+import * as groupPostController from "../controllers/groupPostController.js";
 
-router.post("/", groupPostController.createPost);
-router.get("/public", groupPostController.getPublicPosts);
+const router = express.Router();
+
+router.get("/", groupPostController.getPublicPosts);
 router.get("/my/:userId", groupPostController.getMyPosts);
 router.get("/archived/:userId", groupPostController.getArchivedPosts);
 router.get("/:id", groupPostController.getPostById);
+router.post("/", groupPostController.createPost);
 router.put("/:id", groupPostController.updatePost);
-router.put("/:id/archive", groupPostController.archivePost);
+router.patch("/:id/archive", groupPostController.archivePost);
 router.delete("/:id", groupPostController.deletePost);
 
-module.exports = router;
-
+export default router;

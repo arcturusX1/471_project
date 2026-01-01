@@ -1,8 +1,8 @@
-const GroupPost = require("../models/GroupPost");
-const Application = require("../models/Application");
+import GroupPost from "../models/GroupPost.js";
+import Application from "../models/Application.js";
 
 // Create a new group post
-exports.createPost = async (req, res) => {
+export const createPost = async (req, res) => {
   try {
     const {
       projectName,
@@ -44,7 +44,7 @@ exports.createPost = async (req, res) => {
 };
 
 // Get all public posts (visible and active)
-exports.getPublicPosts = async (req, res) => {
+export const getPublicPosts = async (req, res) => {
   try {
     const posts = await GroupPost.find({ isVisible: true, status: "active" })
       .populate("postedBy", "name email department")
@@ -59,7 +59,7 @@ exports.getPublicPosts = async (req, res) => {
 };
 
 // Get posts by user (my posts)
-exports.getMyPosts = async (req, res) => {
+export const getMyPosts = async (req, res) => {
   try {
     const userId = req.params.userId;
     const posts = await GroupPost.find({ postedBy: userId })
@@ -75,7 +75,7 @@ exports.getMyPosts = async (req, res) => {
 };
 
 // Get archived posts
-exports.getArchivedPosts = async (req, res) => {
+export const getArchivedPosts = async (req, res) => {
   try {
     const userId = req.params.userId;
     const posts = await GroupPost.find({
@@ -94,7 +94,7 @@ exports.getArchivedPosts = async (req, res) => {
 };
 
 // Get single post by ID
-exports.getPostById = async (req, res) => {
+export const getPostById = async (req, res) => {
   try {
     const post = await GroupPost.findById(req.params.id)
       .populate("postedBy", "name email universityId profile")
@@ -112,7 +112,7 @@ exports.getPostById = async (req, res) => {
 };
 
 // Update post
-exports.updatePost = async (req, res) => {
+export const updatePost = async (req, res) => {
   try {
     const updated = await GroupPost.findByIdAndUpdate(
       req.params.id,
@@ -134,7 +134,7 @@ exports.updatePost = async (req, res) => {
 };
 
 // Archive post
-exports.archivePost = async (req, res) => {
+export const archivePost = async (req, res) => {
   try {
     const updated = await GroupPost.findByIdAndUpdate(
       req.params.id,
@@ -156,7 +156,7 @@ exports.archivePost = async (req, res) => {
 };
 
 // Delete post
-exports.deletePost = async (req, res) => {
+export const deletePost = async (req, res) => {
   try {
     const deleted = await GroupPost.findByIdAndDelete(req.params.id);
     if (!deleted) {

@@ -1,0 +1,74 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import type { AuthResponse } from '../types/auth';
+import './Auth.css'; // Reusing the same CSS from Register
+
+const Login: React.FC = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data: AuthResponse = await response.json();
+
+      if (response.ok && data.user && data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        if (data.user.roles.includes('faculty')) {
+          navigate('/faculty-dashboard');
+        } else {
+          navigate('/student-dashboard');
+        }
+
+      } else {
+        alert(data.message || "Invalid Login");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Server error. Please try again later.");
+    }
+  };
+
+  return (
+    <div className="auth-container">
+      <form className="auth-form" onSubmit={handleSubmit}>
+        <h2>Login</h2>
+        <input 
+          type="email" 
+          placeholder="Email" 
+          value={email}
+          onChange={(e) => setEmail(e.target.value)} 
+          required 
+        />
+        <input 
+          type="password" 
+          placeholder="Password" 
+          value={password}
+          onChange={(e) => setPassword(e.target.value)} 
+          required 
+        />
+        <button type="submit">Login</button>
+        <p style={{ textAlign: 'center', marginTop: '10px' }}>
+          Don't have an account? <span style={{ color: '#007bff', cursor: 'pointer' }} onClick={() => navigate('/register')}>Register</span>
+        </p>
+        <hr style={{ width: '100%', margin: '15px 0', border: '0.5px solid #eee' }} />
+        <p style={{ textAlign: 'center' }}>
+          <span style={{ color: '#dc3545', cursor: 'pointer', fontSize: '0.9rem' }} onClick={() => navigate('/admin-login')}>
+            Admin Login
+          </span>
+        </p>
+      </form>
+    </div>
+  );
+};
+
+export default Login;

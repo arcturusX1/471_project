@@ -1,7 +1,7 @@
-const Location = require("../models/Location");
+import Location from "../models/Location.js";
 
 // Create a new location
-exports.createLocation = async (req, res) => {
+export const createLocation = async (req, res) => {
   try {
     const created = await Location.create(req.body || {});
     res.status(201).json(created);
@@ -14,7 +14,7 @@ exports.createLocation = async (req, res) => {
 };
 
 // Get all locations
-exports.getLocations = async (_req, res) => {
+export const getLocations = async (_req, res) => {
   try {
     const locations = await Location.find().lean();
     res.json(locations);
@@ -25,7 +25,7 @@ exports.getLocations = async (_req, res) => {
 };
 
 // Lookup by QR code reference
-exports.getLocationByQr = async (req, res) => {
+export const getLocationByQr = async (req, res) => {
   try {
     const { qrCodeRef } = req.params;
     const location = await Location.findOne({ qrCodeRef }).lean();
@@ -41,7 +41,7 @@ exports.getLocationByQr = async (req, res) => {
 
 
 // Get location by id
-exports.getLocationById = async (req, res) => {
+export const getLocationById = async (req, res) => {
   try {
     const location = await Location.findById(req.params.id).lean();
     if (!location) {
@@ -55,7 +55,7 @@ exports.getLocationById = async (req, res) => {
 };
 
 // Update location
-exports.updateLocation = async (req, res) => {
+export const updateLocation = async (req, res) => {
   try {
     const updated = await Location.findByIdAndUpdate(
       req.params.id,
@@ -75,7 +75,7 @@ exports.updateLocation = async (req, res) => {
 };
 
 // Delete location
-exports.deleteLocation = async (req, res) => {
+export const deleteLocation = async (req, res) => {
   try {
     const deleted = await Location.findByIdAndDelete(req.params.id).lean();
     if (!deleted) {
