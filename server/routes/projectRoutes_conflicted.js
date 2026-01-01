@@ -1,14 +1,24 @@
-const express = require('express');
-const router = express.Router();
-const { Project, User, SupervisorAssignment } = require('../models/model.js');
+<<<<<<< HEAD
+const express = require("express");
 const projectController = require("../controllers/projectController");
 
-// Simple CRUD routes from yasir branch
+const router = express.Router();
+
 router.get("/", projectController.getProjects);
 router.get("/:id", projectController.getProjectById);
 router.post("/", projectController.createProject);
 router.put("/:id", projectController.updateProject);
 router.delete("/:id", projectController.deleteProject);
+
+module.exports = router;
+
+
+
+
+=======
+const express = require('express');
+const router = express.Router();
+const { Project, User, SupervisorAssignment } = require('../models/model.js');
 
 // =================================================================
 // HELPER: STATUS BADGE LOGIC (Fixed Priority)
@@ -27,7 +37,7 @@ const normalizeStatus = (p) => {
     if (stage === 'draft_approved') return 'in-progress';
     if (status === 'in-progress' || status === 'in progress') return 'in-progress';
     if (status === 'accepted_by_supervisor') return 'in-progress';
-
+    
     // Legacy check: some data might store "In Progress" with different casing
     if (status.includes('in progress')) return 'in-progress';
 
@@ -35,7 +45,7 @@ const normalizeStatus = (p) => {
     if (stage === 'uploaded_draft') return 'under_review';
     if (status === 'under_review' || status === 'under-review') return 'under_review';
     if (status.includes('under review')) return 'under_review';
-
+    
     // 5. DEFAULT -> PROPOSAL (Yellow)
     return 'proposal';
 };
@@ -50,47 +60,47 @@ router.get('/search', async (req, res) => {
 
         // A. Title
         if (title) filter.title = { $regex: title, $options: 'i' };
-
+        
         // B. Department
         if (department) {
             if (department.toUpperCase() === 'CSE') {
                 filter.$or = [
-                    { department: { $regex: 'CSE', $options: 'i' } },
-                    { department: null },
-                    { department: "" },
+                    { department: { $regex: 'CSE', $options: 'i' } }, 
+                    { department: null }, 
+                    { department: "" }, 
                     { department: { $exists: false } }
                 ];
             } else {
                 filter.department = { $regex: department, $options: 'i' };
             }
         }
-
+        
         // C. Status Filter (The Logic Fix)
         if (status && status !== "") {
             const s = status.toLowerCase();
 
             if (s === 'completed') {
                 filter.$or = [
-                    { stage: 'final_draft_accepted' },
+                    { stage: 'final_draft_accepted' }, 
                     { status: 'completed' },
                     { status: 'final' }
                 ];
-            }
+            } 
             else if (s === 'in-progress') {
                 filter.$or = [
-                    { stage: 'draft_approved' },
-                    { status: 'in-progress' },
+                    { stage: 'draft_approved' }, 
+                    { status: 'in-progress' }, 
                     { status: 'in progress' },
                     { status: 'accepted_by_supervisor' }
                 ];
-            }
+            } 
             else if (s === 'under_review') {
                 filter.$or = [
-                    { stage: 'uploaded_draft' },
+                    { stage: 'uploaded_draft' }, 
                     { status: 'under_review' },
                     { status: 'under-review' }
                 ];
-            }
+            } 
             else if (s === 'proposal') {
                 // Proposal means "NONE of the advanced stages exist"
                 filter.$and = [
@@ -134,7 +144,7 @@ router.get('/search', async (req, res) => {
 
             return {
                 ...p,
-                supervisorName,
+                supervisorName, 
                 assignedHistory: historyLog,
                 status: normalizeStatus(p), // <--- This now strictly follows the same rules as the filter
                 department: (p.department && p.department !== '-') ? p.department : 'CSE'
@@ -152,22 +162,22 @@ router.get('/search', async (req, res) => {
 // =================================================================
 router.put('/assign', async (req, res) => {
     const { projectId, supervisorName, adminName } = req.body;
-
+    
     try {
         const isRemoval = !supervisorName || supervisorName === "Unassigned" || supervisorName.trim() === "";
 
         if (isRemoval) {
             await Project.findByIdAndUpdate(projectId, {
                 $set: { supervisors: [] },
-                $unset: { supervisor: 1 }
+                $unset: { supervisor: 1 } 
             }, { strict: false });
             return res.json({ success: true, message: "Supervisor removed" });
         }
 
-        const supervisorUser = await User.findOne({
-            name: { $regex: new RegExp(`^${supervisorName.trim()}$`, 'i') }
+        const supervisorUser = await User.findOne({ 
+            name: { $regex: new RegExp(`^${supervisorName.trim()}$`, 'i') } 
         });
-
+        
         if (!supervisorUser) {
             return res.status(400).json({ message: `User "${supervisorName}" not found` });
         }
@@ -181,7 +191,7 @@ router.put('/assign', async (req, res) => {
         if (!project.status || project.status === 'proposal') {
             updateFields.status = 'in-progress';
         }
-
+        
         if (!project.department) updateFields.department = 'CSE';
 
         await Project.findByIdAndUpdate(projectId, {
@@ -194,11 +204,11 @@ router.put('/assign', async (req, res) => {
             await SupervisorAssignment.create({
                 project: projectId,
                 supervisor: supervisorUser._id,
-                assignedBy: adminUser?._id,
+                assignedBy: adminUser?._id, 
                 role: 'supervisor'
             });
         } catch (e) { console.log("History error", e.message); }
-
+        
         res.json({ success: true, message: "Assigned successfully" });
 
     } catch (err) {
@@ -208,3 +218,4 @@ router.put('/assign', async (req, res) => {
 });
 
 module.exports = router;
+>>>>>>> main

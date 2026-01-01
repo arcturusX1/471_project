@@ -1,5 +1,5 @@
 import express from 'express';
-import { Reservation } from '../models/model.js';
+import Booking from '../models/Booking.js';
 import { syncToGoogleCalendar } from '../utils/googleCalendar.js';
 import { authenticate } from '../middleware/auth.js';
 
@@ -9,7 +9,7 @@ const router = express.Router();
 router.post('/', authenticate, async (req, res) => {
   try {
     const { type, resourceId, startTime, endTime } = req.body;
-    const booking = new Reservation({ user: req.user._id, type, resourceId, startTime, endTime });
+    const booking = new Booking({ user: req.user._id, type, resourceId, startTime, endTime });
     await booking.save();
     res.status(201).json(booking);
   } catch (error) {
@@ -20,7 +20,7 @@ router.post('/', authenticate, async (req, res) => {
 // Confirm booking (and sync to calendar)
 router.patch('/:id/confirm', authenticate, async (req, res) => {
   try {
-    const booking = await Reservation.findById(req.params.id);
+    const booking = await Booking.findById(req.params.id);
     if (!booking || booking.user.toString() !== req.user._id.toString()) {
       return res.status(404).json({ message: 'Booking not found' });
     }
@@ -45,7 +45,7 @@ router.patch('/:id/confirm', authenticate, async (req, res) => {
 // Get bookings
 router.get('/', authenticate, async (req, res) => {
   try {
-    const bookings = await Reservation.find({ user: req.user._id });
+    const bookings = await Booking.find({ user: req.user._id });
     res.json(bookings);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });

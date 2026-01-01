@@ -1,14 +1,36 @@
+<<<<<<< HEAD
+const mongoose = require("mongoose");
+
+const userSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    universityId: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true },
+    passwordHash: { type: String, required: true },
+    roles: [{ type: String }], // Array of roles
+    profile: {
+      department: { type: String },
+    },
+  },
+  { timestamps: true }
+);
+
+const User = mongoose.model("User", userSchema);
+
+module.exports = { User };
+
+=======
 import mongoose from 'mongoose';
-const { Schema, model } = mongoose;
+const { Schema, model } = mongoose; 
 
 /**
  * ENUMS & helpers
  */
-const USER_ROLES = ['student', 'faculty', 'supervisor', 'administrator', 'ST', 'RA', 'TA'];
-const PROJECT_STATUS = ['uploaded', 'under_review', 'graded', 'proposal', 'in-progress', 'completed'];
-const PROJECT_STAGE = ['proposal', 'midterm', 'final'];
-const RESERVATION_STATUS = ['confirmed', 'pending', 'cancelled', 'rejected'];
-const MESSAGE_VISIBILITY = ['members', 'faculty', 'admins'];
+const USER_ROLES = ['student','faculty','supervisor','administrator','ST','RA','TA'];
+const PROJECT_STATUS = ['uploaded','under_review','graded','proposal','in-progress','completed'];
+const PROJECT_STAGE = ['proposal','midterm','final'];
+const RESERVATION_STATUS = ['confirmed','pending','cancelled','rejected'];
+const MESSAGE_VISIBILITY = ['members','faculty','admins'];
 
 /**
  * User
@@ -45,7 +67,7 @@ const UserSchema = new Schema({
 
   // Availability status can be updated by faculty/supervisor
   availability: {
-    status: { type: String, enum: ['available', 'busy', 'away'], default: 'available' },
+    status: { type: String, enum: ['available','busy','away'], default: 'available' },
     windows: [{
       start: Date,
       end: Date
@@ -139,7 +161,7 @@ const ReservationSchema = new Schema({
   endAt: { type: Date, required: true },
   status: { type: String, enum: RESERVATION_STATUS, default: 'pending' },
   attendees: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-  createdVia: { type: String, enum: ['web', 'mobile', 'api', 'import'], default: 'web' },
+  createdVia: { type: String, enum: ['web','mobile','api','import'], default: 'web' },
 
   // google event id if synced
   googleEventId: String
@@ -159,7 +181,7 @@ const SupervisorAssignmentSchema = new Schema({
   project: { type: Schema.Types.ObjectId, ref: 'Project', required: true, index: true },
   supervisor: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   assignedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  role: { type: String, enum: ['supervisor', 'co-supervisor', 'external'], default: 'supervisor' },
+  role: { type: String, enum: ['supervisor','co-supervisor','external'], default: 'supervisor' },
   notes: String
 }, { timestamps: true });
 
@@ -170,13 +192,13 @@ SupervisorAssignmentSchema.index({ project: 1, supervisor: 1 }, { unique: true }
  */
 const ApplicationSchema = new Schema({
   applicant: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  position: { type: String, enum: ['ST', 'RA', 'TA'], required: true },
+  position: { type: String, enum: ['ST','RA','TA'], required: true },
   expertise: [String],
   availability: [{
     start: Date,
     end: Date
   }],
-  status: { type: String, enum: ['applied', 'accepted', 'rejected', 'withdrawn'], default: 'applied' },
+  status: { type: String, enum: ['applied','accepted','rejected','withdrawn'], default: 'applied' },
   notes: String,
   reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
@@ -194,7 +216,7 @@ const ConsultationRequestSchema = new Schema({
   preferredEnd: Date,
   confirmedStart: Date,
   confirmedEnd: Date,
-  status: { type: String, enum: ['requested', 'accepted', 'declined', 'completed', 'cancelled'], default: 'requested' },
+  status: { type: String, enum: ['requested','accepted','declined','completed','cancelled'], default: 'requested' },
   assignedSTs: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   notes: String,
   feedbackForST: {
@@ -216,7 +238,7 @@ ConsultationRequestSchema.index({ requester: 1, status: 1 });
 const EvaluationSchema = new Schema({
   project: { type: Schema.Types.ObjectId, ref: 'Project', required: true, index: true },
   assessor: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  role: { type: String, enum: ['supervisor', 'co-supervisor', 'ST', 'RA', 'TA', 'external'], required: true },
+  role: { type: String, enum: ['supervisor','co-supervisor','ST','RA','TA','external'], required: true },
   scores: Schema.Types.Mixed, // { design: 8, implementation: 9, report: 7 }
   overallScore: { type: Number, min: 0 },
   comments: String,
@@ -243,12 +265,30 @@ AuditLogSchema.index({ actor: 1, action: 1 });
 AuditLogSchema.index({ targetModel: 1, targetId: 1 });
 
 /**
+ * GroupPost (Group finder)
+ */
+const GroupPostSchema = new Schema({
+  author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  title: { type: String, required: true },
+  description: String,
+  goal: String,
+  neededSkills: [String],
+  stack: [String],
+  preferredRole: { type: String, enum: ['leader','member','any'], default: 'any' },
+  maxMembers: Number,
+  members: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  isOpen: { type: Boolean, default: true }
+}, { timestamps: true });
+
+GroupPostSchema.index({ title: 'text', description: 'text', neededSkills: 'text', stack: 'text' });
+
+/**
  * Messaging: Conversation + Message
  * - supports one-to-one and group
  * - access controlled by conversation.members
  */
 const ConversationSchema = new Schema({
-  type: { type: String, enum: ['one-to-one', 'group', 'project'], default: 'one-to-one' },
+  type: { type: String, enum: ['one-to-one','group','project'], default: 'one-to-one' },
   members: [{ type: Schema.Types.ObjectId, ref: 'User' }], // who can see messages
   project: { type: Schema.Types.ObjectId, ref: 'Project' }, // optional bind to project
   title: String,
@@ -274,7 +314,7 @@ const NotificationSchema = new Schema({
   type: String, // e.g. 'proposal_accepted','deadline_approaching'
   data: Schema.Types.Mixed,
   isRead: { type: Boolean, default: false },
-  channel: { type: String, enum: ['in-app', 'email', 'push'], default: 'in-app' }
+  channel: { type: String, enum: ['in-app','email','push'], default: 'in-app' }
 }, { timestamps: true });
 
 /**
@@ -298,7 +338,7 @@ const QRLocationSchema = new Schema({
  */
 const ResourceSchema = new Schema({
   resourceId: { type: String, required: true, unique: true },
-  type: { type: String, enum: ['lab', 'desk', 'room', 'computer'], required: true },
+  type: { type: String, enum: ['lab','desk','room','computer'], required: true },
   capacity: Number,
   location: String,
   tags: [String],
@@ -320,6 +360,7 @@ const Application = model('Application', ApplicationSchema);
 const ConsultationRequest = model('ConsultationRequest', ConsultationRequestSchema);
 const Evaluation = model('Evaluation', EvaluationSchema);
 const AuditLog = model('AuditLog', AuditLogSchema);
+const GroupPost = model('GroupPost', GroupPostSchema);
 const Conversation = model('Conversation', ConversationSchema);
 const Message = model('Message', MessageSchema);
 const Notification = model('Notification', NotificationSchema);
@@ -328,6 +369,7 @@ const Resource = model('Resource', ResourceSchema);
 
 export {
   User, Project, Reservation, SupervisorAssignment, Application,
-  ConsultationRequest, Evaluation, AuditLog,
+  ConsultationRequest, Evaluation, AuditLog, GroupPost,
   Conversation, Message, Notification, QRLocation, Resource
 };
+>>>>>>> main

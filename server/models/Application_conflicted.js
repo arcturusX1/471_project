@@ -1,0 +1,55 @@
+<<<<<<< HEAD
+const mongoose = require("mongoose");
+
+const applicationSchema = new mongoose.Schema(
+  {
+    groupPost: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "GroupPost",
+      required: true,
+    },
+    applicant: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
+    message: { type: String }, // Optional message from applicant
+  },
+  { timestamps: true }
+);
+
+// Prevent duplicate applications
+applicationSchema.index({ groupPost: 1, applicant: 1 }, { unique: true });
+
+module.exports = mongoose.model("Application", applicationSchema);
+
+=======
+import mongoose from 'mongoose';
+
+const applicationSchema = new mongoose.Schema({
+  student: { type: String, required: true }, // Demo: using string IDs instead of ObjectId refs
+  positionId: { type: String, required: true },
+  positionType: { type: String, enum: ['ST', 'RA', 'TA'], required: true },
+  status: { type: String, enum: ['pending', 'accepted', 'rejected', 'PENDING', 'ACCEPTED', 'REJECTED'], default: 'pending' },
+  appliedAt: { type: Date, default: Date.now },
+  reviewedBy: { type: String }, // Demo: using string IDs instead of ObjectId refs
+  reviewedAt: { type: Date },
+  // Additional fields for detailed application
+  studentName: { type: String, required: true },
+  email: { type: String, required: true },
+  studentId: { type: String, required: true },
+  gpa: { type: String, required: true },
+  expertise: { type: [String], required: true },
+  availability: { type: String, required: true },
+  experience: { type: String, required: true },
+  coverLetter: { type: String, required: true }
+});
+
+const Application = mongoose.models.Application || mongoose.model('Application', applicationSchema);
+export default Application;
+>>>>>>> main

@@ -1,5 +1,5 @@
 {
-  "name": "server",
+  "name": "project-progress-server",
   "version": "1.0.0",
   "description": "Express server for tracking project stages and updates",
   "main": "server.js",
