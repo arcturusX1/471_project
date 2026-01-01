@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react';
 
 interface Location {
   _id: string;
-  resourceId: string;
-  name: string;
-  type: 'lab' | 'desk' | 'room' | 'computer';
-  capacity: number;
-  location: string;
-  tags: string[];
-  qrCodeRef?: string;
+  floor: number;
+  block: string;
+  rooms: {
+    number: string;
+    code: string;
+  }[];
+  closestBlocks: string[];
+  closestRooms: string[];
+  qrCodeRef: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -19,12 +21,11 @@ export default function LocationManagement() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [formData, setFormData] = useState({
-    resourceId: '',
-    name: '',
-    type: 'lab' as 'lab' | 'desk' | 'room' | 'computer',
-    capacity: 1,
-    location: '',
-    tags: '',
+    floor: 1,
+    block: '',
+    rooms: [{ number: '', code: '' }],
+    closestBlocks: '',
+    closestRooms: '',
     qrCodeRef: ''
   });
 
@@ -36,7 +37,7 @@ export default function LocationManagement() {
     try {
       const res = await fetch('/api/locations');
       const data = await res.json();
-      setLocations(data.data || []);
+      setLocations(data || []);
     } catch (error) {
       console.error("Failed to fetch locations:", error);
     } finally {
@@ -49,7 +50,9 @@ export default function LocationManagement() {
     try {
       const payload = {
         ...formData,
-        tags: formData.tags.split(',').map(s => s.trim()).filter(s => s)
+        closestBlocks: formData.closestBlocks.split(',').map(s => s.trim()).filter(s => s),
+        closestRooms: formData.closestRooms.split(',').map(s => s.trim()).filter(s => s),
+        rooms: formData.rooms.filter(room => room.number && room.code)
       };
 
       const res = await fetch('/api/locations', {
@@ -79,7 +82,9 @@ export default function LocationManagement() {
     try {
       const payload = {
         ...formData,
-        tags: formData.tags.split(',').map(s => s.trim()).filter(s => s)
+        closestBlocks: formData.closestBlocks.split(',').map(s => s.trim()).filter(s => s),
+        closestRooms: formData.closestRooms.split(',').map(s => s.trim()).filter(s => s),
+        rooms: formData.rooms.filter(room => room.number && room.code)
       };
 
       const res = await fetch(`/api/locations/${editingLocation._id}`, {
@@ -124,12 +129,11 @@ export default function LocationManagement() {
 
   const resetForm = () => {
     setFormData({
-      resourceId: '',
-      name: '',
-      type: 'lab',
-      capacity: 1,
-      location: '',
-      tags: '',
+      floor: 1,
+      block: '',
+      rooms: [{ number: '', code: '' }],
+      closestBlocks: '',
+      closestRooms: '',
       qrCodeRef: ''
     });
   };
@@ -137,13 +141,35 @@ export default function LocationManagement() {
   const startEdit = (location: Location) => {
     setEditingLocation(location);
     setFormData({
-      resourceId: location.resourceId,
-      name: location.name,
-      type: location.type,
-      capacity: location.capacity,
-      location: location.location,
-      tags: location.tags.join(', '),
-      qrCodeRef: location.qrCodeRef || ''
+      floor: location.floor,
+      block: location.block,
+      rooms: location.rooms,
+      closestBlocks: location.closestBlocks.join(', '),
+      closestRooms: location.closestRooms.join(', '),
+      qrCodeRef: location.qrCodeRef
+    });
+  };
+
+  const addRoom = () => {
+    setFormData({
+      ...formData,
+      rooms: [...formData.rooms, { number: '', code: '' }]
+    });
+  };
+
+  const updateRoom = (index: number, field: 'number' | 'code', value: string) => {
+    const updatedRooms = [...formData.rooms];
+    updatedRooms[index][field] = value;
+    setFormData({
+      ...formData,
+      rooms: updatedRooms
+    });
+  };
+
+  const removeRoom = (index: number) => {
+    setFormData({
+      ...formData,
+      rooms: formData.rooms.filter((_, i) => i !== index)
     });
   };
 
@@ -170,91 +196,103 @@ export default function LocationManagement() {
             <form onSubmit={editingLocation ? handleUpdate : handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Resource ID</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.resourceId}
-                    onChange={(e) => setFormData({...formData, resourceId: e.target.value})}
-                    className="w-full p-2 border rounded-lg"
-                    placeholder="e.g., LAB-001"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="w-full p-2 border rounded-lg"
-                    placeholder="Computer Lab A"
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Type</label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({...formData, type: e.target.value as any})}
-                    className="w-full p-2 border rounded-lg"
-                  >
-                    <option value="lab">Lab</option>
-                    <option value="desk">Desk</option>
-                    <option value="room">Room</option>
-                    <option value="computer">Computer</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Capacity</label>
+                  <label className="block text-sm font-medium mb-1">Floor</label>
                   <input
                     type="number"
-                    min="1"
+                    min="0"
                     required
-                    value={formData.capacity}
-                    onChange={(e) => setFormData({...formData, capacity: parseInt(e.target.value)})}
+                    value={formData.floor}
+                    onChange={(e) => setFormData({...formData, floor: parseInt(e.target.value)})}
                     className="w-full p-2 border rounded-lg"
-                    placeholder="30"
+                    placeholder="1"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Block</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.block}
+                    onChange={(e) => setFormData({...formData, block: e.target.value})}
+                    className="w-full p-2 border rounded-lg"
+                    placeholder="A"
                   />
                 </div>
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-1">Location</label>
+                <label className="block text-sm font-medium mb-1">QR Code Reference</label>
                 <input
                   type="text"
                   required
-                  value={formData.location}
-                  onChange={(e) => setFormData({...formData, location: e.target.value})}
-                  className="w-full p-2 border rounded-lg"
-                  placeholder="Building A, Floor 2"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Tags (comma-separated)</label>
-                <input
-                  type="text"
-                  value={formData.tags}
-                  onChange={(e) => setFormData({...formData, tags: e.target.value})}
-                  className="w-full p-2 border rounded-lg"
-                  placeholder="programming, design, research"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">QR Code Reference (optional)</label>
-                <input
-                  type="text"
                   value={formData.qrCodeRef}
                   onChange={(e) => setFormData({...formData, qrCodeRef: e.target.value})}
                   className="w-full p-2 border rounded-lg"
                   placeholder="QR-001"
                 />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2">Rooms</label>
+                {formData.rooms.map((room, index) => (
+                  <div key={index} className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      required
+                      value={room.number}
+                      onChange={(e) => updateRoom(index, 'number', e.target.value)}
+                      className="flex-1 p-2 border rounded-lg"
+                      placeholder="Room number (01-18)"
+                    />
+                    <input
+                      type="text"
+                      required
+                      value={room.code}
+                      onChange={(e) => updateRoom(index, 'code', e.target.value)}
+                      className="flex-1 p-2 border rounded-lg"
+                      placeholder="Room code (e.g., 7B-16)"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeRoom(index)}
+                      className="px-3 py-2 bg-red-100 text-red-800 rounded hover:bg-red-200"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addRoom}
+                  className="px-4 py-2 bg-green-100 text-green-800 rounded hover:bg-green-200"
+                >
+                  Add Room
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Closest Blocks (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={formData.closestBlocks}
+                    onChange={(e) => setFormData({...formData, closestBlocks: e.target.value})}
+                    className="w-full p-2 border rounded-lg"
+                    placeholder="A, B, C"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Closest Rooms (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={formData.closestRooms}
+                    onChange={(e) => setFormData({...formData, closestRooms: e.target.value})}
+                    className="w-full p-2 border rounded-lg"
+                    placeholder="7A-16, 7B-15"
+                  />
+                </div>
               </div>
               
               <div className="flex gap-3 justify-end">
@@ -291,8 +329,8 @@ export default function LocationManagement() {
             <div key={location._id} className="bg-white rounded-lg shadow p-6 border">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-xl font-semibold text-slate-800">{location.name}</h3>
-                  <p className="text-sm text-gray-600">ID: {location.resourceId}</p>
+                  <h3 className="text-xl font-semibold text-slate-800">Floor {location.floor}, Block {location.block}</h3>
+                  <p className="text-sm text-gray-600">QR Code: {location.qrCodeRef}</p>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -310,39 +348,45 @@ export default function LocationManagement() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <span className="font-medium text-slate-700">Type:</span>
-                  <span className="ml-2 px-2 py-1 bg-gray-100 rounded text-sm capitalize">
-                    {location.type}
-                  </span>
+              <div className="mb-4">
+                <h4 className="font-medium text-slate-700 mb-2">Rooms ({location.rooms.length}):</h4>
+                <div className="grid grid-cols-3 gap-2">
+                  {location.rooms.map((room, index) => (
+                    <div key={index} className="bg-gray-50 p-2 rounded text-sm">
+                      <span className="font-medium">{room.code}</span>
+                      <span className="text-gray-600 ml-1">({room.number})</span>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <span className="font-medium text-slate-700">Capacity:</span>
-                  <span className="ml-2">{location.capacity}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-slate-700">Location:</span>
-                  <span className="ml-2">{location.location}</span>
-                </div>
-                {location.qrCodeRef && (
-                  <div>
-                    <span className="font-medium text-slate-700">QR Code:</span>
-                    <span className="ml-2">{location.qrCodeRef}</span>
-                  </div>
-                )}
               </div>
               
-              {location.tags.length > 0 && (
-                <div className="mb-4">
-                  <span className="font-medium text-slate-700">Tags:</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {location.tags.map((tag, index) => (
-                      <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
+              {(location.closestBlocks.length > 0 || location.closestRooms.length > 0) && (
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  {location.closestBlocks.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-slate-700 mb-2">Closest Blocks:</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {location.closestBlocks.map((block, index) => (
+                          <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                            {block}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {location.closestRooms.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-slate-700 mb-2">Closest Rooms:</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {location.closestRooms.map((room, index) => (
+                          <span key={index} className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">
+                            {room}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               

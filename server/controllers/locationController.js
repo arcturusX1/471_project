@@ -1,4 +1,4 @@
-import Location from "../models/Location.js";
+import { Location } from "../models/model.js";
 
 // Create a new location
 export const createLocation = async (req, res) => {

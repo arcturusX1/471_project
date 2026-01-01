@@ -1,5 +1,4 @@
-import GroupPost from "../models/GroupPost.js";
-import Application from "../models/Application.js";
+import { GroupPost, Application } from "../models/model.js";
 
 // Create a new group post
 export const createPost = async (req, res) => {
@@ -152,6 +151,96 @@ export const archivePost = async (req, res) => {
   } catch (err) {
     console.error("Error archiving post:", err);
     res.status(400).json({ error: "Failed to archive post" });
+  }
+};
+
+// Apply to join a group post
+export const applyToPost = async (req, res) => {
+  try {
+    const { applicantId } = req.body;
+    const postId = req.params.id;
+
+    if (!applicantId) {
+      return res.status(400).json({ error: "Applicant ID is required" });
+    }
+
+    const post = await GroupPost.findById(postId);
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    if (post.status !== 'active') {
+      return res.status(400).json({ error: "Post is not accepting new members" });
+    }
+
+    if (post.currentMembers >= post.maxMembers) {
+      return res.status(400).json({ error: "Team is already full" });
+    }
+
+    // Check if user is already a member
+    const isAlreadyMember = post.members.some(member => 
+      member.user.toString() === applicantId
+    );
+    
+    if (isAlreadyMember) {
+      return res.status(400).json({ error: "User is already a member of this team" });
+    }
+
+    // Add user to members
+    post.members.push({
+      user: applicantId,
+      joinedAt: new Date()
+    });
+
+    await post.save();
+
+    const updatedPost = await GroupPost.findById(postId)
+      .populate("postedBy", "name email universityId profile")
+      .populate("members.user", "name email universityId profile");
+
+    res.json(updatedPost);
+  } catch (err) {
+    console.error("Error applying to post:", err);
+    res.status(400).json({ error: "Failed to apply to post", details: err.message });
+  }
+};
+
+// Leave a group post
+export const leavePost = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const postId = req.params.id;
+
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+
+    const post = await GroupPost.findById(postId);
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    // Check if user is a member
+    const memberIndex = post.members.findIndex(member => 
+      member.user.toString() === userId
+    );
+    
+    if (memberIndex === -1) {
+      return res.status(400).json({ error: "User is not a member of this team" });
+    }
+
+    // Remove user from members
+    post.members.splice(memberIndex, 1);
+    await post.save();
+
+    const updatedPost = await GroupPost.findById(postId)
+      .populate("postedBy", "name email universityId profile")
+      .populate("members.user", "name email universityId profile");
+
+    res.json(updatedPost);
+  } catch (err) {
+    console.error("Error leaving post:", err);
+    res.status(400).json({ error: "Failed to leave post", details: err.message });
   }
 };
 

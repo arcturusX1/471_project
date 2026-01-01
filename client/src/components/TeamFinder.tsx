@@ -2,20 +2,35 @@ import { useState, useEffect } from 'react';
 
 interface GroupPost {
   _id: string;
-  title: string;
-  description: string;
-  goal: string;
-  neededSkills: string[];
-  stack: string[];
-  preferredRole: string;
+  projectName: string;
+  details: string;
+  department: string;
   maxMembers: number;
-  members: any[];
-  isOpen: boolean;
-  author: {
+  currentMembers: number;
+  supervisorName: string;
+  techStack: string[];
+  postedBy: {
+    _id: string;
     name: string;
     email: string;
+    universityId: string;
+    profile?: {
+      department: string;
+    };
   };
+  members: {
+    user: {
+      _id: string;
+      name: string;
+      email: string;
+      universityId: string;
+    };
+    joinedAt: string;
+  }[];
+  status: 'active' | 'filled' | 'archived';
+  isVisible: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export default function TeamFinder() {
@@ -23,13 +38,12 @@ export default function TeamFinder() {
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    goal: '',
-    neededSkills: '',
-    stack: '',
-    preferredRole: 'any',
-    maxMembers: 4
+    projectName: '',
+    details: '',
+    department: '',
+    maxMembers: 4,
+    supervisorName: '',
+    techStack: ''
   });
 
   useEffect(() => {
@@ -40,12 +54,64 @@ export default function TeamFinder() {
     try {
       const res = await fetch('/api/group-posts');
       const data = await res.json();
-      setPosts(data.data || []);
+      setPosts(data || []);
     } catch (error) {
       console.error("Failed to fetch group posts:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleJoinPost = async (postId: string) => {
+    try {
+      const res = await fetch(`/api/group-posts/${postId}/apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          applicantId: 'current-user-id' // This should come from auth context
+        })
+      });
+      
+      if (res.ok) {
+        alert('✅ Successfully joined the team!');
+        fetchPosts();
+      } else {
+        const error = await res.json();
+        alert(`❌ Failed to join: ${error.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error("Error joining post:", error);
+      alert('❌ Server error');
+    }
+  };
+
+  const handleLeavePost = async (postId: string) => {
+    if (!confirm('Are you sure you want to leave this team?')) return;
+
+    try {
+      const res = await fetch(`/api/group-posts/${postId}/leave`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: 'current-user-id' // This should come from auth context
+        })
+      });
+      
+      if (res.ok) {
+        alert('✅ Successfully left the team!');
+        fetchPosts();
+      } else {
+        alert('❌ Failed to leave team');
+      }
+    } catch (error) {
+      console.error("Error leaving post:", error);
+      alert('❌ Server error');
+    }
+  };
+
+  const isCurrentUserMember = (post: GroupPost) => {
+    // Check if current user is already a member (this should use actual auth context)
+    return post.members.some(member => member.user._id === 'current-user-id');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,8 +122,8 @@ export default function TeamFinder() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          neededSkills: formData.neededSkills.split(',').map(s => s.trim()),
-          stack: formData.stack.split(',').map(s => s.trim())
+          techStack: formData.techStack.split(',').map(s => s.trim()).filter(s => s),
+          postedBy: 'current-user-id' // This should come from auth context
         })
       });
       
@@ -65,13 +131,12 @@ export default function TeamFinder() {
         alert('✅ Team post created successfully!');
         setShowCreateForm(false);
         setFormData({
-          title: '',
-          description: '',
-          goal: '',
-          neededSkills: '',
-          stack: '',
-          preferredRole: 'any',
-          maxMembers: 4
+          projectName: '',
+          details: '',
+          department: '',
+          maxMembers: 4,
+          supervisorName: '',
+          techStack: ''
         });
         fetchPosts();
       } else {
@@ -103,79 +168,65 @@ export default function TeamFinder() {
             <h3 className="text-xl font-bold mb-4">Create Team Post</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Project Title</label>
+                <label className="block text-sm font-medium mb-1">Project Name</label>
                 <input
                   type="text"
                   required
-                  value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  value={formData.projectName}
+                  onChange={(e) => setFormData({...formData, projectName: e.target.value})}
                   className="w-full p-2 border rounded-lg"
-                  placeholder="Enter project title"
+                  placeholder="Enter project name"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
+                <label className="block text-sm font-medium mb-1">Details</label>
                 <textarea
                   required
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  value={formData.details}
+                  onChange={(e) => setFormData({...formData, details: e.target.value})}
                   className="w-full p-2 border rounded-lg"
                   rows={3}
                   placeholder="Describe your project"
                 />
               </div>
               
-              <div>
-                <label className="block text-sm font-medium mb-1">Goal</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.goal}
-                  onChange={(e) => setFormData({...formData, goal: e.target.value})}
-                  className="w-full p-2 border rounded-lg"
-                  placeholder="What do you want to achieve?"
-                />
-              </div>
-              
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Needed Skills (comma-separated)</label>
+                  <label className="block text-sm font-medium mb-1">Department</label>
                   <input
                     type="text"
                     required
-                    value={formData.neededSkills}
-                    onChange={(e) => setFormData({...formData, neededSkills: e.target.value})}
+                    value={formData.department}
+                    onChange={(e) => setFormData({...formData, department: e.target.value})}
                     className="w-full p-2 border rounded-lg"
-                    placeholder="React, Node.js, MongoDB"
+                    placeholder="Computer Science"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Tech Stack (comma-separated)</label>
+                  <label className="block text-sm font-medium mb-1">Supervisor Name</label>
                   <input
                     type="text"
                     required
-                    value={formData.stack}
-                    onChange={(e) => setFormData({...formData, stack: e.target.value})}
+                    value={formData.supervisorName}
+                    onChange={(e) => setFormData({...formData, supervisorName: e.target.value})}
                     className="w-full p-2 border rounded-lg"
-                    placeholder="React, Express, MongoDB"
+                    placeholder="Dr. Smith"
                   />
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Preferred Role</label>
-                  <select
-                    value={formData.preferredRole}
-                    onChange={(e) => setFormData({...formData, preferredRole: e.target.value})}
+                  <label className="block text-sm font-medium mb-1">Tech Stack (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={formData.techStack}
+                    onChange={(e) => setFormData({...formData, techStack: e.target.value})}
                     className="w-full p-2 border rounded-lg"
-                  >
-                    <option value="any">Any</option>
-                    <option value="leader">Leader</option>
-                    <option value="member">Member</option>
-                  </select>
+                    placeholder="React, Express, MongoDB"
+                  />
                 </div>
                 
                 <div>
@@ -222,53 +273,71 @@ export default function TeamFinder() {
             <div key={post._id} className="bg-white rounded-lg shadow p-6 border">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-xl font-semibold text-slate-800">{post.title}</h3>
-                  <p className="text-sm text-gray-600">by {post.author.name}</p>
+                  <h3 className="text-xl font-semibold text-slate-800">{post.projectName}</h3>
+                  <p className="text-sm text-gray-600">by {post.postedBy.name}</p>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  post.isOpen 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {post.isOpen ? 'Open' : 'Closed'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    post.status === 'active' 
+                      ? 'bg-green-100 text-green-800' 
+                      : post.status === 'filled'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {post.status}
+                  </span>
+                  {post.status === 'active' && (
+                    <button
+                      onClick={() => isCurrentUserMember(post) ? handleLeavePost(post._id) : handleJoinPost(post._id)}
+                      className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                        isCurrentUserMember(post)
+                          ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                          : post.currentMembers >= post.maxMembers
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                      }`}
+                      disabled={post.status !== 'active' || post.currentMembers >= post.maxMembers}
+                    >
+                      {isCurrentUserMember(post) ? 'Leave Team' : 
+                       post.currentMembers >= post.maxMembers ? 'Full' : 'Join Team'}
+                    </button>
+                  )}
+                </div>
               </div>
               
-              <p className="text-gray-700 mb-4">{post.description}</p>
-              
-              <div className="mb-4">
-                <h4 className="font-medium text-slate-700 mb-2">Goal:</h4>
-                <p className="text-gray-600 text-sm">{post.goal}</p>
-              </div>
+              <p className="text-gray-700 mb-4">{post.details}</p>
               
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <h4 className="font-medium text-slate-700 mb-2">Needed Skills:</h4>
-                  <div className="flex flex-wrap gap-1">
-                    {post.neededSkills.map((skill, index) => (
-                      <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
+                  <h4 className="font-medium text-slate-700 mb-2">Department:</h4>
+                  <p className="text-gray-600 text-sm">{post.department}</p>
                 </div>
                 
                 <div>
+                  <h4 className="font-medium text-slate-700 mb-2">Supervisor:</h4>
+                  <p className="text-gray-600 text-sm">{post.supervisorName}</p>
+                </div>
+              </div>
+              
+              {post.techStack.length > 0 && (
+                <div className="mb-4">
                   <h4 className="font-medium text-slate-700 mb-2">Tech Stack:</h4>
                   <div className="flex flex-wrap gap-1">
-                    {post.stack.map((tech, index) => (
+                    {post.techStack.map((tech, index) => (
                       <span key={index} className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">
                         {tech}
                       </span>
                     ))}
                   </div>
                 </div>
-              </div>
+              )}
               
               <div className="flex justify-between items-center text-sm text-gray-600">
                 <div>
-                  <span className="font-medium">Role:</span> {post.preferredRole} | 
-                  <span className="font-medium ml-2">Members:</span> {post.members.length}/{post.maxMembers}
+                  <span className="font-medium">Members:</span> {post.currentMembers}/{post.maxMembers}
+                  {post.members.length > 0 && (
+                    <span className="ml-2">({post.members.map(m => m.user.name).join(', ')})</span>
+                  )}
                 </div>
                 <div>
                   Created {new Date(post.createdAt).toLocaleDateString()}

@@ -126,6 +126,47 @@ ProjectSchema.index({
 }, { weights: { title: 5, tags: 3, description: 1 } });
 
 /**
+ * Location (Physical location with QR mapping)
+ */
+const LocationSchema = new Schema({
+  floor: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
+  block: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  rooms: [{
+    number: {
+      type: String,
+      required: true,
+      match: [/^(0[1-9]|1[0-8])$/, "Room number must be between 01 and 18"],
+    },
+    code: {
+      type: String,
+      required: true,
+    },
+  }],
+  closestBlocks: [{
+    type: String,
+    trim: true,
+  }],
+  closestRooms: [{
+    type: String,
+    trim: true,
+  }],
+  qrCodeRef: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+  },
+}, { timestamps: true });
+
+/**
  * Reservation (Room/Lab/Desk/Meeting room booking)
  * - Prevent double booking with a compound unique index on resource + time window
  * - Use application-level check + index for safety
@@ -164,6 +205,53 @@ const SupervisorAssignmentSchema = new Schema({
 }, { timestamps: true });
 
 SupervisorAssignmentSchema.index({ project: 1, supervisor: 1 }, { unique: true });
+
+/**
+ * GroupPost (Group finder)
+ */
+const GroupPostSchema = new Schema({
+  projectName: { type: String, required: true },
+  details: { type: String, required: true },
+  department: { type: String, required: true },
+  maxMembers: { type: Number, required: true, min: 1 },
+  currentMembers: { type: Number, default: 0, min: 0 },
+  supervisorName: { type: String, required: true },
+  techStack: [{ type: String }], // Optional array of technologies
+  postedBy: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  members: [
+    {
+      user: { type: Schema.Types.ObjectId, ref: "User" },
+      joinedAt: { type: Date, default: Date.now },
+    },
+  ],
+  status: {
+    type: String,
+    enum: ["active", "filled", "archived"],
+    default: "active",
+  },
+  isVisible: { type: Boolean, default: true }, // Controls visibility in public feed
+}, { timestamps: true });
+
+// Update visibility when members are filled
+GroupPostSchema.pre("save", function (next) {
+  // Update currentMembers based on members array length
+  if (this.members && Array.isArray(this.members)) {
+    this.currentMembers = this.members.length;
+  }
+
+  if (this.currentMembers >= this.maxMembers) {
+    this.status = "filled";
+    this.isVisible = false; // Hide from public feed when filled
+  }
+
+  if (typeof next === "function") {
+    next();
+  }
+});
 
 /**
  * Application (for ST / RA / TA)
@@ -316,6 +404,8 @@ const User = model('User', UserSchema);
 const Project = model('Project', ProjectSchema);
 const Reservation = model('Reservation', ReservationSchema);
 const SupervisorAssignment = model('SupervisorAssignment', SupervisorAssignmentSchema);
+const GroupPost = model('GroupPost', GroupPostSchema);
+const Location = model('Location', LocationSchema);
 const Application = model('Application', ApplicationSchema);
 const ConsultationRequest = model('ConsultationRequest', ConsultationRequestSchema);
 const Evaluation = model('Evaluation', EvaluationSchema);
@@ -327,7 +417,7 @@ const QRLocation = model('QRLocation', QRLocationSchema);
 const Resource = model('Resource', ResourceSchema);
 
 export {
-  User, Project, Reservation, SupervisorAssignment, Application,
+  User, Project, Reservation, SupervisorAssignment, GroupPost, Location, Application,
   ConsultationRequest, Evaluation, AuditLog,
   Conversation, Message, Notification, QRLocation, Resource
 };
